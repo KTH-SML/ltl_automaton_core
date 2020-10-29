@@ -44,7 +44,13 @@ class TSModel(DiGraph):
         self.build_full(state_models)
 
     def build_full(self, state_models):
-        self.product = GraphProduct(state_models[0], state_models[1])
+        # Initialize TS model on first model from state_models
+        self.product = state_models[0]
+
+        # If more than one state_model, create a product graph between all models
+        if (len(state_models) > 1):
+            for sm in state_models[1:]:
+                self.product = GraphProduct(self.product, sm)
 
 
 class GraphProduct(DiGraph):
