@@ -6,6 +6,7 @@ import rospy
 from math import sqrt, cos, sin, radians
 import numpy
 import sys
+from init import *
 
 from ts import MotionStateModel, LoadStateModel, TSModel
 
@@ -22,8 +23,12 @@ def show_automaton(automaton_graph):
     return
 
 if __name__ == '__main__':
-    motion_model = MotionStateModel()
-    load_state_model = LoadStateModel()
-    model = TSModel([motion_model, load_state_model])
+    
+   
+    # Here we take the product of each element of state_models to define the full TS
+    # state_models defined in init.py: define components of TS 
+    model = TSModel(state_models)
+
+    # Depict the full TS graph
     show_automaton(model.product)
     sys.exit(0)
