@@ -8,7 +8,7 @@ import numpy
 import sys
 from init import *
 
-from ts import MotionStateModel, LoadStateModel, TSModel
+from ts import TSModel
 
 import matplotlib.pyplot as plt
 import networkx as nx
