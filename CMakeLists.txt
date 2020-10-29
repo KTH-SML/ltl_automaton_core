@@ -11,7 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+
   message_generation
+
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,6 +74,7 @@ find_package(catkin REQUIRED COMPONENTS
 # generate_messages(
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
+
 # )
 
 ################################################
@@ -105,8 +108,13 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
+<<<<<<< HEAD
 #  LIBRARIES ltl_automaton_core
 #  CATKIN_DEPENDS roscpp
+=======
+#  LIBRARIES ltl_core
+#  CATKIN_DEPENDS roscpp rospy std_msgs
+>>>>>>> 45201e475283c42fd146ec816588572aa485b096
 #  DEPENDS system_lib
 )
 
@@ -124,6 +132,7 @@ include_directories(
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/ltl_automaton_core.cpp
+
 # )
 
 ## Add cmake target dependencies of the library
@@ -135,6 +144,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/ltl_automaton_core_node.cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
