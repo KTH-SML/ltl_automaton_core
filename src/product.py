@@ -9,20 +9,28 @@ class ProdAut(DiGraph):
 	def __init__(self, ts, buchi, alpha=1000):
 		DiGraph.__init__(self, ts=ts, buchi=buchi, alpha=alpha, initial=set(), accept=set(), type='ProdAut')
 
+	# Build product automaton of TS and büchi by exploring every node combination and adding edges when required
 	def build_full(self):
+		# Iterate over all TS nodes and buchi nodes
 		for f_ts_node in self.graph['ts'].nodes():
 			for f_buchi_node in self.graph['buchi'].nodes():
+				# Compose node from current TS and buchi node
 				f_prod_node = self.composition(f_ts_node, f_buchi_node)
+				# Iterate over all nodes connected to current TS node and büchi node
 				for t_ts_node in self.graph['ts'].successors(f_ts_node):
 					for t_buchi_node in self.graph['buchi'].successors(f_buchi_node):
+							# Compose node from connected buchi node and connected TS node, and check if this node
+							# should be connected to previously composed TS/büchi node
 							t_prod_node = self.composition(t_ts_node, t_buchi_node)
-							# NODE LABEL HAS BEEN REPLACED BY ACTION (MAYBE NEEDED LATER?)
+							# Get label from TS node, and weight and action from TS edge
 							label = self.graph['ts'].node[f_ts_node]['label']
 							cost = self.graph['ts'][f_ts_node][t_ts_node]['weight']
+							action = self.graph['ts'][f_ts_node][t_ts_node]['action']
+							# Check if label is compatible with büchi (black magic for now, need to understand this better)
 							truth, dist = check_label_for_buchi_edge(self.graph['buchi'], label, f_buchi_node, t_buchi_node)
 							total_weight = cost + self.graph['alpha']*dist
 							if truth:
-								self.add_edge(f_prod_node, t_prod_node, weight=total_weight, action=self.graph['ts'][f_ts_node][t_ts_node]['action'])
+								self.add_edge(f_prod_node, t_prod_node, weight=total_weight, action=action)
 
 	def composition(self, ts_node, buchi_node):
 		prod_node = (ts_node, buchi_node)
