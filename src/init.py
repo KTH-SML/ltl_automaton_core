@@ -7,9 +7,9 @@ from networkx.classes.digraph import DiGraph
 MotionGraph = DiGraph(initial=set())
 
 # Define graph nodes
-MotionGraph.add_node('r1', label='r1')
-MotionGraph.add_node('r2', label='r2')
-MotionGraph.add_node('r3', label='r3')
+MotionGraph.add_node('r1', label=set(['r1']))
+MotionGraph.add_node('r2', label=set(['r2']))
+MotionGraph.add_node('r3', label=set(['r3']))
 
 # Define graph edges
 MotionGraph.add_edge('r1','r2', weight=10, action='goto_r2')
@@ -27,8 +27,8 @@ MotionGraph.graph['initial']=set(['r1'])
 LoadGraph = DiGraph(initial=set())
 
 # Define graph nodes
-LoadGraph.add_node('unloaded')
-LoadGraph.add_node('loaded')
+LoadGraph.add_node('unloaded', label=set(['unloaded']))
+LoadGraph.add_node('loaded', label=set(['loaded']))
 
 # Define graph edges
 LoadGraph.add_edge('unloaded','loaded', weight=50, action='pick')
@@ -37,6 +37,27 @@ LoadGraph.add_edge('loaded','unloaded', weight=10, action='drop')
 # Define initial state
 LoadGraph.graph['initial']=set(['unloaded'])
 
+#--------------------------------------------
+# # BatteryGraph: Defines battery state
+# BatteryGraph = DiGraph(initial=set())
+
+# # Define graph nodes
+# BatteryGraph.add_node('battery_low', label='battery_low')
+# BatteryGraph.add_node('battery_high', label='battery_high')
+
+# # Define graph edges
+# BatteryGraph.add_edge('battery_low','battery_high', weight=10, action='charge')
+
+# # Define initial state
+# LoadGraph.graph['initial']=set(['battery_high'])
+
+
 #----------------------------------------------
 # Combine graphs into list:
 state_models = [MotionGraph, LoadGraph]
+
+#----------------------------------------------
+# LTL formula and buchi generation
+hard_task = '([]<> r1) && ([]<> r2)'
+soft_task = ''
+

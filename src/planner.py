@@ -9,6 +9,7 @@ import sys
 from init import *
 
 from ts import TSModel
+from ltl_planner import LTLPlanner
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -27,8 +28,11 @@ if __name__ == '__main__':
    
     # Here we take the product of each element of state_models to define the full TS
     # state_models defined in init.py: define components of TS 
-    model = TSModel(state_models)
+    robot_model = TSModel(state_models)
+    ltl_planner = LTLPlanner(robot_model, hard_task, soft_task)
+    ltl_planner.optimal()
+
 
     # Depict the full TS graph
-    show_automaton(model.product)
+    show_automaton(ltl_planner.product)
     sys.exit(0)

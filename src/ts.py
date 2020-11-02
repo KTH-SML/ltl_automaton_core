@@ -11,17 +11,18 @@ def distance(pose1, pose2):
 class TSModel(DiGraph):
     #Take as input a list of state models to combine
     def __init__(self, state_models):
-        self.build_full(state_models)
-        print "Full TS constructed with initial state(s):"
-        print self.graph['initial']
+        self.state_models = state_models
+        #self.build_full(state_models)
+        #print "Full TS constructed with initial state(s):"
+        #print self.graph['initial']
 
-    def build_full(self, state_models):
+    def build_full(self):
         # Initialize TS model on first model from state_models
-        self.product = state_models[0]
+        self.product = self.state_models[0]
 
         # If more than one state_model, create a product graph between all models
-        if (len(state_models) > 1):
-            for sm in state_models[1:]:
+        if (len(self.state_models) > 1):
+            for sm in self.state_models[1:]:
                 self.product = GraphProduct(self.product, sm)
 
         # Build class instance model from product
@@ -39,7 +40,8 @@ class GraphProduct(DiGraph):
     def composition(self, state_a, state_b):
         prod_node = (state_a, state_b)
         if not self.has_node(prod_node):
-            self.add_node(prod_node, marker='unvisited')
+            new_label = self.model_a.node[state_a]['label'].union(self.model_b.node[state_b]['label'])
+            self.add_node(prod_node, label=new_label, marker='unvisited')
             #If both states are initial states in their own graph, composed state is an initial state
             if (state_a in self.model_a.graph['initial']) and (state_b in self.model_b.graph['initial']):
                 self.graph['initial'].add(prod_node)
