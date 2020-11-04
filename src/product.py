@@ -121,28 +121,99 @@ class ProdAut_Run(object):
 		
 
 	def plan_output(self, product):
+
+		# Collect the nodes of the TS associated with the prefix plan
 		self.line = [product.node[node]['ts'] for node in self.prefix]
+		# Collect the nodes of the TS associated with the suffix plan
 		self.loop = [product.node[node]['ts'] for node in self.suffix]
+		# Append start of loop to the end to create a 'loop'
+		self.loop.append(self.loop[0])
+
+		print('loop: ' +str(self.loop))
+
+		# Collect prefix nodes in list of tuples e.g. [ (prefix_node_1, prefix_node_2), (prefix_node_2, prefix_node_3), ..., (prefix_node_n-1, prefix_node_n)]
 		self.pre_ts_edges = zip(self.line[0:-1], self.line[1:])
+		# Collect suffix nodes in list of tuples (see pre_ts_edges)
 		self.suf_ts_edges = zip(self.loop[0:-1], self.loop[1:])
+
 		# output plan --- for execution
-		self.pre_plan = [self.line[0][0],]
+
+		# Initialize prefix plan and cost
+		self.pre_plan = list()
+		# Initialize pre_plan cost
 		self.pre_plan_cost = [0,]
+
+		# Iterate over the nodes associated with the prefix (see pre_ts_edges)
 		for ts_edge in self.pre_ts_edges:
-			if product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] == 'goto':
-				self.pre_plan.append(ts_edge[1][0]) # motion 
-			else:
-				self.pre_plan.append(ts_edge[1][1]) # action
+
+			# Extract 'action' label between the two consecutive TS nodes of the prefix plan and add it to the pre_plan
+			self.pre_plan.append( product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] )
+
+			# Add the 'weight' label between the two consectuve TS nodes as the cost of the prefix plan
 			self.pre_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # cost 
+
+		# Initialize suffix plan and cost
 		self.suf_plan = list()
 		self.suf_plan_cost = [0,]
+
+		# Iterate over the nodes associated with the suffix (see suf_ts_edges)
 		for ts_edge in self.suf_ts_edges:
-			if product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] == 'goto':
-				self.suf_plan.append(ts_edge[1][0]) # motion 
-			else:
-				self.suf_plan.append(ts_edge[1][1]) # action
+
+			# Extract 'action' label between the two consecutive TS nodes of the suffix plan and add it to the suf_plan
+			self.suf_plan.append( product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] )
+
+			# Add 'weight' label between the consecutive TS nodes of the suffix plan to the cost
 			self.suf_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # cost
 
+		print('pre_plan: ' + str(self.pre_plan))
+		print('suf_plan: ' + str(self.suf_plan))
+
+
+	##OLD plan_output##
+	# def plan_output(self, product):
+
+	# 	# Collect the nodes of the TS associated with the prefix plan
+	# 	self.line = [product.node[node]['ts'] for node in self.prefix]
+	# 	# Collect the nodes of the TS associated with the suffix plan
+	# 	self.loop = [product.node[node]['ts'] for node in self.suffix]
+
+	# 	# Collect prefix nodes in list of tuples e.g. [ (prefix_node_1, prefix_node_2), (prefix_node_2, prefix_node_3), ..., (prefix_node_n-1, prefix_node_n)]
+	# 	self.pre_ts_edges = zip(self.line[0:-1], self.line[1:])
+	# 	# Collect suffix nodes in list of tuples (see pre_ts_edges)
+	# 	self.suf_ts_edges = zip(self.loop[0:-1], self.loop[1:])
+
+	# 	# output plan --- for execution
+
+	# 	# Initialize prefix plan: Extract first state of the state_model associated with the prefix plan
+	# 	self.pre_plan = [self.line[0][0],]
+	# 	# Initialize pre_plan cost
+	# 	self.pre_plan_cost = [0,]
+
+	# 	# Iterate over the nodes associated with the prefix (see pre_ts_edges)
+	# 	for ts_edge in self.pre_ts_edges:
+	# 		# Check the action for the consecutive set of nodes in the prefix. If the action is 'goto', add the next motion state (ie region) as the plan's action
+	# 		if product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] == 'goto':
+	# 			self.pre_plan.append(ts_edge[1][0]) # motion NOTE: here the motion is associated with the TS model and stored in order of Motion then Action 
+	# 		else:
+	# 			# if the action is NOT 'goto', then we add the 'action' to the pre plan
+	# 			self.pre_plan.append(ts_edge[1][1]) # action
+
+	# 		# add the weight of the weight from the TS between the two consectuve nodes as the cost of the plan
+	# 		self.pre_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # cost 
+
+	# 	# Initialize suffix plan and cost
+	# 	self.suf_plan = list()
+	# 	self.suf_plan_cost = [0,]
+
+	# 	# Iterate over the nodes associated with the suffix (see suf_ts_edges)
+	# 	for ts_edge in self.suf_ts_edges:
+	# 		if product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] == 'goto':
+	# 			self.suf_plan.append(ts_edge[1][0]) # motion 
+	# 		else:
+	# 			self.suf_plan.append(ts_edge[1][1]) # action
+	# 		self.suf_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # cost
+
+		
 
 
 

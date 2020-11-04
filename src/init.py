@@ -58,6 +58,7 @@ state_models = [MotionGraph, LoadGraph]
 
 #----------------------------------------------
 # LTL formula and buchi generation
-hard_task = '([]<> r1) && ([]<> r2)'
+#hard_task = '([]<> r1) && ([]<> r2)'
+hard_task = '([]<> loaded ) && ([]<> unloaded )'
 soft_task = ''
 

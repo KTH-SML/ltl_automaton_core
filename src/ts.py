@@ -24,7 +24,7 @@ class TSModel(DiGraph):
         if (len(self.state_models) > 1):
             for sm in self.state_models[1:]:
                 self.product = GraphProduct(self.product, sm)
-
+        
         # Build class instance model from product
         DiGraph.__init__(self, 
                          incoming_graph_data=self.product,

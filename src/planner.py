@@ -32,7 +32,8 @@ if __name__ == '__main__':
     ltl_planner = LTLPlanner(robot_model, hard_task, soft_task)
     ltl_planner.optimal()
 
-
-    # Depict the full TS graph
+    # Depict the full TS and product graph
+    show_automaton(robot_model.product)
     show_automaton(ltl_planner.product)
+    
     sys.exit(0)
