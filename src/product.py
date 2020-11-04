@@ -129,7 +129,6 @@ class ProdAut_Run(object):
 		# Append start of loop to the end to create a 'loop'
 		self.loop.append(self.loop[0])
 
-		print('loop: ' +str(self.loop))
 
 		# Collect prefix nodes in list of tuples e.g. [ (prefix_node_1, prefix_node_2), (prefix_node_2, prefix_node_3), ..., (prefix_node_n-1, prefix_node_n)]
 		self.pre_ts_edges = zip(self.line[0:-1], self.line[1:])
