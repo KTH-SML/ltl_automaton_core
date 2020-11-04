@@ -32,8 +32,16 @@ if __name__ == '__main__':
     ltl_planner = LTLPlanner(robot_model, hard_task, soft_task)
     ltl_planner.optimal()
 
+    # Iterate through plan to check find_next_move()
+    plan_iter = 0
+    plan_end = 10
+    print(ltl_planner.next_move)
+    while (plan_iter <= plan_end):
+        print(ltl_planner.find_next_move())
+        plan_iter += 1
+
     # Depict the full TS and product graph
-    show_automaton(robot_model.product)
-    show_automaton(ltl_planner.product)
+    #show_automaton(robot_model.product)
+    #show_automaton(ltl_planner.product)
     
     sys.exit(0)

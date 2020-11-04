@@ -60,12 +60,71 @@ class LTLPlanner(object):
 		self.opt_log.append((self.Time, self.run.pre_plan, self.run.suf_plan, self.run.precost, self.run.sufcost, self.run.totalcost))
 		self.last_time = self.Time
 		self.acc_change = 0
-		self.index = 1
+		self.index = 0
 		self.segment = 'line'
 		self.next_move = self.run.pre_plan[self.index]
 		return plantime
 
+	def find_next_move(self):
+		# Check if plan is in 'line' i.e. prefix or 'loop' i.e. suffix
+
+		# if index is not the last of the pre_plan...
+		if self.segment == 'line' and self.index < len(self.run.pre_plan)-1:
+
+			# Add the node that has been visited to trace
+			self.trace.append(self.run.line[self.index])
+
+			# Increment index counter
+			self.index += 1
+
+			# Extract next move from pre_plan
+			self.next_move = self.run.pre_plan[self.index]
+
+		# If index is the last of the pre-plan or equivalently if the pre_plan is short...
+		elif (self.segment == 'line') and ((self.index == len(self.run.pre_plan)-1) or (len(self.run.pre_plan) <= 1)):
+
+			# Add the node that has been visited to trace
+			self.trace.append(self.run.line[self.index])
+
+			# Reset index for the suffix loop
+			self.index = 0
+
+			# Change the segment type to loop
+			self.segment = 'loop'
+
+			# Extract first move of suffix plan
+			self.next_move = self.run.suf_plan[self.index]
+
+		# If index is not the last of the suffix plan or equivalently the suf_plan is short...
+		elif self.segment == 'loop' and self.index < len(self.run.suf_plan)-1:
+
+			# Add the node that has been visited to trace
+			self.trace.append(self.run.loop[self.index])
+
+			# Increment the index
+			self.index += 1
+
+			# Extract next move from suffix plan
+			self.next_move = self.run.suf_plan[self.index]
+
+		# If index is the last element of the suf_plan or equivalently the suf_plan is short....
+		elif (self.segment == 'loop') and ((self.index == len(self.run.suf_plan)-1) or (len(self.run.suf_plan) <= 1)):
+
+			# Add the node that has been visited to trace
+			self.trace.append(self.run.loop[self.index])
+
+			# Resent index 
+			self.index = 0
+
+			# Extract next move from suffix plan
+			self.next_move = self.run.suf_plan[self.index]
+		return self.next_move
+
+
+	# OLD find_next_move
 	# def find_next_move(self):
+	# 	# Check if plan is in 'line' i.e. prefix or 'loop' i.e. suffix
+	# 	# Also, if the index is 
 	# 	if self.segment == 'line' and self.index < len(self.run.pre_plan)-2:
 	# 		self.trace.append(self.run.line[self.index])
 	# 		self.index += 1
