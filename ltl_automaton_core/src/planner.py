@@ -6,8 +6,8 @@ import rospy
 import sys
 #from init import *
 
-from ts import TSModel
-from ltl_planner import LTLPlanner
+from ltl_tools.ts import TSModel
+from ltl_tools.ltl_planner import LTLPlanner
 
 import matplotlib.pyplot as plt
 import networkx as nx
