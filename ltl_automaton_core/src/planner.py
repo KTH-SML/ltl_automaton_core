@@ -117,7 +117,8 @@ class MainPlanner(object):
 
         else:
             #ERROR: unknown state (not part of TS)
-            # Wait for new TS state
+            self.plan_pub.publish('None')
+            rospy.logwarn('State is not in TS plan!')
 
 #==============================
 #             Main

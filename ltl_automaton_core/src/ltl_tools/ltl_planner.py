@@ -37,7 +37,7 @@ class LTLPlanner(object):
 			self.product.build_accept()
 			self.run, plantime = dijkstra_plan_optimal(self.product, self.beta)
                 if self.run == None:
-                        print '---No valid has been found!---'
+                        print '---No valid plan has been found!---'
                         print '---Check you FTS or task---'
                         return 
 		#print '\n'
@@ -121,7 +121,10 @@ class LTLPlanner(object):
 		return self.next_move
 
 	def replan(self):
+		'''Create new system plan based on previous history'''
 		new_run = improve_plan_given_history(self.product, self.trace)
+
+
 		if (new_run) and (new_run.pre_plan !=self.run.pre_plan[self.index:-1]):
 			self.run = new_run
 			self.index = 1
