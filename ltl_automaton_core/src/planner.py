@@ -14,7 +14,7 @@ import networkx as nx
 from ltl_automaton_utilities import import_ts_file, state_models_from_ts
 
 #Import LTL automaton message definitions
-import ltl_automaton_msgs.msg
+from ltl_automaton_msgs.msg import TransitionSystemState
 
 
 def show_automaton(automaton_graph):
@@ -29,13 +29,22 @@ def show_automaton(automaton_graph):
 class MainPlanner(object):
     def __init__(self):
 
-    def init_params():
+        self.init_params();
+
+        self.build_automaton();
+
+        self.setup_pub_sub();
+
+    def init_params(self):
         #Get parameters from parameter server
         self.agent_name = rospy.get_param('agent_name')
 
         # Get LTL hard task and raise error if don't exist
-        if not self.hard_task = rospy.get_param('hard_task'):
+        if (rospy.has_param('hard_task')):
+            self.hard_task = rospy.get_param('hard_task')
+        else:
             raise InitError("Cannot initialize LTL planner, no hard_task defined")
+
         # Get LTL soft task
         self.soft_task = rospy.get_param('soft_task', "")
 
@@ -44,15 +53,33 @@ class MainPlanner(object):
 
         #If initial TS states is from agent, wait from agent state callback
         if self.initial_ts_state_from_agent:
+            self.initial_ts_dict = init_ts_state_from_agent(rospy.wait_for_message("ts_states", TransitionSystemState))
+        else:
+            self.initial_ts_dict = None
+
+    # 
+    def init_ts_state_from_agent(self, msg=TransitionSystemState):
+        initial_ts_dict_ = None
+
+        # If message is conform (same number of state as number of state dimensions)
+        if (len(msg.states) == len(msg.state_dimension_names)):
+            # Create dictionnary with paired dimension_name/state_value
+            initial_ts_dict_ = dict()
+            for i in range(msg.states):
+                initial_ts_dict_.append({msg.state_dimension_names[i] : msg.states[i]}) 
+
+        # Else message is malformed, raise error
+        else:
+            raise TSError("initial states don't match TS state models: "+len(msg.states)+" initial states and "+len(msg.state_dimension_names)+" state models")
+        
+        # Return initial state dictionnary
+        return initial_ts_dict_
 
 
     def build_automaton(self):
         # Import TS from config file
-        state_models = state_models_from_ts(import_ts_file('test_ts.yaml'))
-
-        hard_task = '([]<> (r1 && loaded)) && ([] (r1 ->Xunloaded)) && ([]<> r2)'
-        soft_task = ''
-       
+        state_models = state_models_from_ts(import_ts_file('test_ts.yaml'), self.initial_ts_dict)
+     
         # Here we take the product of each element of state_models to define the full TS
         robot_model = TSModel(state_models)
         ltl_planner = LTLPlanner(robot_model, self.hard_task, self.soft_task)
@@ -72,10 +99,10 @@ class MainPlanner(object):
     def setup_pub_sub(self):
 
         # Initialize subscriber to provide current state of robot
-        self.state_sub = rospy.Subscriber('ts_states', TransitionSystemState() , self.ltl_state_callback, queue_size=1, latch=True) 
+        self.state_sub = rospy.Subscriber('ts_states', TransitionSystemState() , self.ltl_state_callback, queue_size=1) 
 
         # Initialize publisher to send plan commands
-        self.plan_pub = rospy.Publisher('next_move_cmd', TransitionSystemState.string, queue_size=1, latch=True)
+        self.plan_pub = rospy.Publisher('next_move_cmd', TransitionSystemState.string, queue_size=1, latched=True)
 
 
     def ltl_state_callback(self, msg=TransitionSystemState()):
@@ -93,7 +120,7 @@ class MainPlanner(object):
                 if state == self.ltl_planner.run.line[self.ltl_planner.index]:
                     is_next_state = True
 
-            if ltl_planner.segment == 'loop'
+            if ltl_planner.segment == 'loop':
                 # Check if state is the next state of the plan
                 if state == self.ltl_planner.run.loop[self.ltl_planner.index]:
                     is_next_state = True
