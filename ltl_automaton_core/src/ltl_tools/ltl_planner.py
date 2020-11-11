@@ -120,6 +120,14 @@ class LTLPlanner(object):
 			self.next_move = self.run.suf_plan[self.index]
 		return self.next_move
 
+	def replan(self):
+		new_run = improve_plan_given_history(self.product, self.trace)
+		if (new_run) and (new_run.pre_plan !=self.run.pre_plan[self.index:-1]):
+			self.run = new_run
+			self.index = 1
+			self.segment = 'line'
+			self.next_move = self.run.pre_plan[self.index]
+			print 'Plan adapted!'
 
 	# OLD find_next_move
 	# def find_next_move(self):

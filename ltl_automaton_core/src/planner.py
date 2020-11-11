@@ -71,14 +71,51 @@ class MainPlanner(object):
 
     def setup_pub_sub(self):
 
+        # Initialize subscriber to provide current state of robot
+        self.state_sub = rospy.Subscriber('ts_states', TransitionSystemState() , self.ltl_state_callback, queue_size=1, latch=True) 
+
+        # Initialize publisher to send plan commands
+        self.plan_pub = rospy.Publisher('next_move_cmd', TransitionSystemState.string, queue_size=1, latch=True)
+
+
     def ltl_state_callback(self, msg=TransitionSystemState()):
         
-        #TODO Check if is next state in plan or not
-        #if next state in plan
-            # find next move
-        #else if state in TS automaton
-            # define init and replan
-        #else
+        # Get system state
+        state = msg.states
+        is_next_state = False
+
+        # Check if state is in TS
+        if state in self.robot_model.product['ts']:
+
+            # Check if plan is in prefix or suffix phase
+            if self.ltl_planner.segment == 'line':
+                # Check if state is the next state of the plan
+                if state == self.ltl_planner.run.line[self.ltl_planner.index]:
+                    is_next_state = True
+
+            if ltl_planner.segment == 'loop'
+                # Check if state is the next state of the plan
+                if state == self.ltl_planner.run.loop[self.ltl_planner.index]:
+                    is_next_state = True
+
+            # If state is next state in plan, find next_move and output
+            if is_next_state:
+                self.ltl_planner.find_next_move()
+
+                # Publish next move
+                self.plan_pub.publish(self.ltl_planner.next_move)
+               
+            elif not(is_next_state):
+                #Set state as initial
+
+                # Replan
+                self.ltl_planner.replan()
+
+                # Publish next move
+                self.plan_pub.publish(self.ltl_planner.next_move)
+
+
+        else:
             #ERROR: unknown state (not part of TS)
             # Wait for new TS state
 
