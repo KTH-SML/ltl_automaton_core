@@ -1,4 +1,4 @@
-# TS definitions are to be interpreted by the agent node. The LTL core planner only uses the node names, connections, and action names to build its automaton.
+# TS definitions are to be interpreted by the agent node. The LTL core planner only uses the node names, connections, weights, and action names to build its automaton.
 #
 # Possible TS types:
 #   3d_pose_region (3D pose [[x,y,z], [x,y,z,w]] with quaternion orientation)
@@ -7,6 +7,7 @@
 #   2d_point_region (2D point [x, y] without orientation)
 #   nexus_load
 
+state_dim: ["region", "load"]
 state_models:
     region:
         ts_type: "3d_pose_region"
