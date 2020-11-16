@@ -5,6 +5,8 @@ import Queue
 import rospy
 import sys
 #from init import *
+import ast
+import yaml
 
 from ltl_tools.ts import TSModel
 from ltl_tools.ltl_planner import LTLPlanner
@@ -38,6 +40,11 @@ class MainPlanner(object):
     def init_params(self):
         #Get parameters from parameter server
         self.agent_name = rospy.get_param('agent_name')
+
+        # Get TS from param
+        transition_system_textfile = rospy.get_param('transition_system_textfile')
+        self.transition_system = yaml.load(transition_system_textfile)
+        print self.transition_system
 
         # Get LTL hard task and raise error if don't exist
         if (rospy.has_param('hard_task')):

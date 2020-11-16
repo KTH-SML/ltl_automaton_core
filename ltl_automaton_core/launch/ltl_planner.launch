@@ -8,6 +8,7 @@
   <param name="agent_name" type="string" value="$(arg agent_name)" />
   <!-- hard and soft task parameters -->
   <rosparam command="load" file="$(find ltl_automaton_core)/config/test_ltl_formula.yaml" />
+  <param name="transition_system_textfile" type="str" textfile="$(find ltl_automaton_core)/config/test_ts.yaml" />
 
   <!-- Run planner node -->
   <node name="ltl_planner" pkg="ltl_automaton_core" type="planner.py" output="screen">

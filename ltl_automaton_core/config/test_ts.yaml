@@ -16,23 +16,28 @@ state_models:
             r1:
                 attr:
                     type: "square"
-                    pose: [[0,0,0], [0,0,0,1]]
+                    pose: [[0,0], [0]]
                     length: 1
+                    hysteresis: 0.05
                 connected_to:
                     r2: "goto_r2"
                     r3: "goto_r3"
             r2:
                 attr:
                     type: "station"
-                    pose: [[1,1,0], [0,0,0,1]]
+                    pose: [[1,1], [0]]
                     radius: 0.1
+                    angle_threshold: 0.1
+                    dist_hysteresis: 0.03
+                    angle_hysteresis: 0.1
                 connected_to:
                     r1: "goto_r1"
             r3:
                 attr:
                     type: "square"
-                    pose: [[2,1,0], [0,0,0,1]]
+                    pose: [[2,1], [0]]
                     length: 1
+                    hysteresis: 0.05
                 connected_to:
                     r1: "goto_r1"
     load:
