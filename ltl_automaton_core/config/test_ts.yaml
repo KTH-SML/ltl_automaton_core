@@ -7,10 +7,10 @@
 #   2d_point_region (2D point [x, y] without orientation)
 #   nexus_load
 
-state_dim: ["region", "load"]
+state_dim: ["2d_pose_region", "nexus_load"]
 state_models:
-    region:
-        ts_type: "3d_pose_region"
+    2d_pose_region:
+        ts_type: "2d_pose_region"
         initial: "r1"
         nodes: 
             r1:
@@ -40,7 +40,7 @@ state_models:
                     hysteresis: 0.05
                 connected_to:
                     r1: "goto_r1"
-    load:
+    nexus_load:
         ts_type: "nexus_load"
         initial: "unloaded"
         nodes:

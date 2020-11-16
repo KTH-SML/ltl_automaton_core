@@ -5,7 +5,6 @@ import Queue
 import rospy
 import sys
 #from init import *
-import ast
 import yaml
 
 from ltl_tools.ts import TSModel
