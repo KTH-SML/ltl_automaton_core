@@ -124,6 +124,12 @@ class LTLPlanner(object):
 		'''Create new system plan based on previous history'''
 		new_run = improve_plan_given_history(self.product, self.trace)
 
+		print('new_run = ' + str(new_run))
+		print '------------------------------'
+                print 'the prefix of plan **states**:'
+		print [n for n in new_run.line]
+                print 'the suffix of plan **states**:'
+		print [n for n in new_run.loop]
 
 		if (new_run) and (new_run.pre_plan !=self.run.pre_plan[self.index:-1]):
 			self.run = new_run
