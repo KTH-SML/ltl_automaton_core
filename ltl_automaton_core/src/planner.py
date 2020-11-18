@@ -7,6 +7,8 @@ import sys
 #from init import *
 import yaml
 
+import std_msgs
+
 from ltl_tools.ts import TSModel
 from ltl_tools.ltl_planner import LTLPlanner
 
@@ -36,6 +38,10 @@ class MainPlanner(object):
 
         self.setup_pub_sub();
 
+        # Output first command of plan
+        self.plan_pub.publish(self.ltl_planner.next_move)
+       
+
     def init_params(self):
         #Get parameters from parameter server
         self.agent_name = rospy.get_param('agent_name')
@@ -59,7 +65,7 @@ class MainPlanner(object):
 
         #If initial TS states is from agent, wait from agent state callback
         if self.initial_ts_state_from_agent:
-            self.initial_ts_dict = init_ts_state_from_agent(rospy.wait_for_message("ts_states", TransitionSystemState))
+            self.initial_ts_dict = init_ts_state_from_agent(rospy.wait_for_message("ts_state", TransitionSystemState))
         else:
             self.initial_ts_dict = None
 
@@ -87,28 +93,30 @@ class MainPlanner(object):
         state_models = state_models_from_ts(import_ts_file('test_ts.yaml'), self.initial_ts_dict)
      
         # Here we take the product of each element of state_models to define the full TS
-        robot_model = TSModel(state_models)
-        ltl_planner = LTLPlanner(robot_model, self.hard_task, self.soft_task)
-        ltl_planner.optimal()
+        self.robot_model = TSModel(state_models)
+        self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task)
+        self.ltl_planner.optimal()
 
-        show_automaton(robot_model.product)
-        show_automaton(ltl_planner.product)
+        show_automaton(self.robot_model.product)
+        show_automaton(self.ltl_planner.product)
 
-        # Iterate through plan to check find_next_move()
-        plan_iter = 0
-        plan_end = 10
-        print(ltl_planner.next_move)
-        while (plan_iter <= plan_end):
-            print(ltl_planner.find_next_move())
-            plan_iter += 1
+        
+
+        # # Iterate through plan to check find_next_move()
+        # plan_iter = 0
+        # plan_end = 10
+        # print(ltl_planner.next_move)
+        # while (plan_iter <= plan_end):
+        #     print(ltl_planner.find_next_move())
+        #     plan_iter += 1
 
     def setup_pub_sub(self):
 
         # Initialize subscriber to provide current state of robot
-        self.state_sub = rospy.Subscriber('ts_states', TransitionSystemState() , self.ltl_state_callback, queue_size=1) 
+        self.state_sub = rospy.Subscriber('ts_state', TransitionSystemState , self.ltl_state_callback, queue_size=1) 
 
         # Initialize publisher to send plan commands
-        self.plan_pub = rospy.Publisher('next_move_cmd', TransitionSystemState.string, queue_size=1, latched=True)
+        self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
 
 
     def ltl_state_callback(self, msg=TransitionSystemState()):
@@ -118,7 +126,8 @@ class MainPlanner(object):
         is_next_state = False
 
         # Check if state is in TS
-        if state in self.robot_model.product['ts']:
+        print('(in ltl_state_callback) msg state = ' + str(state))
+        if state in self.robot_model.product['ts'].nodes():
 
             # Check if plan is in prefix or suffix phase
             if self.ltl_planner.segment == 'line':
