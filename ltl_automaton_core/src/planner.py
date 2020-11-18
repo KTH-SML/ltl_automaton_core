@@ -97,8 +97,8 @@ class MainPlanner(object):
         self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task)
         self.ltl_planner.optimal()
 
-        show_automaton(self.robot_model.product)
-        show_automaton(self.ltl_planner.product)
+        #show_automaton(self.robot_model.product)
+        #show_automaton(self.ltl_planner.product)
 
         
 
@@ -121,23 +121,30 @@ class MainPlanner(object):
 
     def ltl_state_callback(self, msg=TransitionSystemState()):
         
-        # Get system state
-        state = msg.states
+        # Get system state, convert to tuple and set boolean condition to False
+        state = tuple(msg.states)
+        #state = ('unloaded','r2') # FOR DEBUGGING REMOVE
         is_next_state = False
 
         # Check if state is in TS
-        print('(in ltl_state_callback) msg state = ' + str(state))
-        if state in self.robot_model.product['ts'].nodes():
+        #print('(in ltl_state_callback) msg state = ' + str(state))
+        #print('in ltl_state_callback) robotmodel.product =' + str(self.robot_model.product.nodes()))
+        if state in self.robot_model.product.nodes():
+
+            #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
 
             # Check if plan is in prefix or suffix phase
             if self.ltl_planner.segment == 'line':
+
+                #print('in ltl_state_callback) ltl_planner.run.line[ltl_planner.index] = ' + str(self.ltl_planner.run.line[self.ltl_planner.index]))
+
                 # Check if state is the next state of the plan
-                if state == self.ltl_planner.run.line[self.ltl_planner.index]:
+                if state == self.ltl_planner.run.line[self.ltl_planner.index+1]:
                     is_next_state = True
 
-            if ltl_planner.segment == 'loop':
+            if self.ltl_planner.segment == 'loop':
                 # Check if state is the next state of the plan
-                if state == self.ltl_planner.run.loop[self.ltl_planner.index]:
+                if state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
                     is_next_state = True
 
             # If state is next state in plan, find next_move and output
@@ -145,6 +152,7 @@ class MainPlanner(object):
                 self.ltl_planner.find_next_move()
 
                 # Publish next move
+                print('Planner.py: Publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
                
             elif not(is_next_state):
@@ -154,6 +162,7 @@ class MainPlanner(object):
                 self.ltl_planner.replan()
 
                 # Publish next move
+                print('Planner.py: **Re-planning** and publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
 
 
