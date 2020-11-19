@@ -165,10 +165,19 @@ class MainPlanner(object):
         #print('in ltl_state_callback) robotmodel.product =' + str(self.robot_model.product.nodes()))
         if state in self.robot_model.product.nodes():
 
-            #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
+            #------------------------------------------------------------------
+            # Try update reachable and if error (forbidden transition), replan
+            #------------------------------------------------------------------
+            if not self.ltl_planner.product.update_reachable(state):
+                # Replan
+                self.ltl_planner.replan()
+                
+                # Publish next move
+                print('Planner.py: **Re-planning** and publishing next move')
+                self.plan_pub.publish(self.ltl_planner.next_move)
 
-            #TODO try update reachable and if error (forbidden transition), replan
-            update_reachable
+
+            #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
 
             # Check if plan is in prefix or suffix phase
             if self.ltl_planner.segment == 'line':
@@ -201,7 +210,6 @@ class MainPlanner(object):
                 # Publish next move
                 print('Planner.py: **Re-planning** and publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
-
 
         else:
             #ERROR: unknown state (not part of TS)
