@@ -35,7 +35,7 @@ class TSModel(DiGraph):
     #----------------------------------
     def set_initial(self, ts_state):
         # If state exist in graph, change initial and return true
-        if ts_state in self.graph.nodes()
+        if ts_state in self.graph.nodes():
             self.graph['initial'] = set([ts_state])
             return True
         # If state doesn't exist in graph, return false

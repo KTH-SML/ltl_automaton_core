@@ -32,9 +32,9 @@ class ProdAut(DiGraph):
                             if truth:
                                 self.add_edge(f_prod_node, t_prod_node, weight=total_weight, action=action)
 
-    # Build initial reachable set from initial state
-    self.reachable_states = set(self.graph['initial'])
-    self.reachable_states = self.update_reachable(self.graph['ts'].graph['initial'])
+        # Build initial reachable set from initial state
+        self.reachable_states = set(self.graph['initial'])
+        #self.reachable_states = self.update_reachable(self.graph['ts'].graph['initial'])
 
     def composition(self, ts_node, buchi_node):
         # Compose node from TS and Büchi

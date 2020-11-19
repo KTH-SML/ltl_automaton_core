@@ -150,7 +150,7 @@ class MainPlanner(object):
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
 
         # Initialize check for trap service
-        self.trap_srv = rospy.Service('is_trap', TrapCheck, trap_check_callback)
+        self.trap_srv = rospy.Service('is_trap', TrapCheck, self.trap_check_callback)
 
 
     def ltl_state_callback(self, msg=TransitionSystemState()):
@@ -168,17 +168,17 @@ class MainPlanner(object):
             #------------------------------------------------------------------
             # Try update reachable and if error (forbidden transition), replan
             #------------------------------------------------------------------
-            if not self.ltl_planner.product.update_reachable(state):
-                rospy.logerr('Can not update reachable - forbidden transition, replanning...')
+            # if not self.ltl_planner.product.update_reachable(state):
+            #     rospy.logerr('Can not update reachable - forbidden transition, replanning...')
 
-                # Replan
-                self.ltl_planner.replan_from_ts_state(state)
+            #     # Replan
+            #     self.ltl_planner.replan_from_ts_state(state)
                 
-                # Publish next move
-                rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
-                self.plan_pub.publish(self.ltl_planner.next_move)
+            #     # Publish next move
+            #     rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
+            #     self.plan_pub.publish(self.ltl_planner.next_move)
 
-                return
+            #     return
 
 
             #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
