@@ -34,7 +34,7 @@ class ProdAut(DiGraph):
 
     # Build initial reachable set from initial state
     self.reachable_states = set(self.graph['initial'])
-    self.reachable_states = self.update_reachable(self.graph['ts']['initial'])
+    self.reachable_states = self.update_reachable(self.graph['ts'].graph['initial'])
 
     def composition(self, ts_node, buchi_node):
         # Compose node from TS and Büchi
@@ -56,18 +56,37 @@ class ProdAut(DiGraph):
         buchi_node = self.node[prod_node]['buchi']
         return ts_node, buchi_node
 
+    #------------------------------
+    # Build initial product states
+    #------------------------------
+    # Initial states of TS and Büchi needs to be
+    # defined before calling this function
     def build_initial(self):
-        self.graph['ts'].build_initial()
+        # Reset initial set
+        self.graph['initial'] = set()
+        # Go through all initial states in TS
         for ts_init in self.graph['ts'].graph['initial']:
+            # Go through all initial states in Büchi
             for buchi_init in self.graph['buchi'].graph['initial']:
-                init_prod_node = self.composition(ts_init, buchi_init)
+                # If both TS and Büchi state are initial state, build composed node and add it to the product initial set
+                init_prod_node = (ts_init, buchi_init)
+                self.graph['initial'].add(init_prod_node)
 
+    #-----------------------------
+    # Build accept product states
+    #-----------------------------
+    # TS needs to be built and Büchi accept states
+    # defined before calling this function
     def build_accept(self):
-        self.graph['ts'].build_full()
-        accept = set()
+        # Reset initial set
+        self.graph['accept'] = set()
+        # Go through all TS states
         for ts_node in self.graph['ts'].nodes():
+            # Go through all accept states in Büchi
             for buchi_accept in self.graph['buchi'].graph['accept']:
-                accept_prod_node = self.composition(ts_node, buchi_accept)
+                accept_prod_node = (ts_node, buchi_accept)
+                # If Büchi state is an accept state, build composed node and add it to the product accept set
+                self.graph['accept'].add(accept_prod_node)
 
     def accept_predecessors(self, accept_node):
         pre_set = set()

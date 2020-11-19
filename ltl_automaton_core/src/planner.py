@@ -172,12 +172,12 @@ class MainPlanner(object):
                 rospy.logerr('Can not update reachable - forbidden transition, replanning...')
 
                 # Replan
-                self.ltl_planner.replan()
+                self.ltl_planner.replan_from_ts_state(state)
                 
                 # Publish next move
                 rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
-                
+
                 return
 
 
@@ -209,7 +209,7 @@ class MainPlanner(object):
                 #Set state as initial
 
                 # Replan
-                self.ltl_planner.replan()
+                self.ltl_planner.replan_from_ts_state(state)
 
                 # Publish next move
                 print('Planner.py: **Re-planning** and publishing next move')

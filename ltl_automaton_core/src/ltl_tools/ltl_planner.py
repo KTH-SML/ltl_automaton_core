@@ -137,6 +137,15 @@ class LTLPlanner(object):
 			self.next_move = self.run.suf_plan[self.index]
 		return self.next_move
 
+	#--------------------------------------
+	# Given a new initial TS state, replan
+	#--------------------------------------
+	def replan_from_ts_state(self, ts_state):
+		# Set new initial state in TS
+		self.product.graph['ts'].set_initial(ts_state)
+		# Use on-the-fly to only rebuild the initial product node
+		optimal(style="on-the-fly")
+
 	def replan(self):
 		'''Create new system plan based on previous history'''
 		new_run = improve_plan_given_history(self.product, self.trace)
