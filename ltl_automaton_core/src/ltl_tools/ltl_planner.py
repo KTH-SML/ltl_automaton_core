@@ -65,6 +65,23 @@ class LTLPlanner(object):
 		self.next_move = self.run.pre_plan[self.index]
 		return plantime
 
+	# Check if given TS state in trap (if reached, no possible path to accept)
+	def is_trap(self, ts_state):
+        # Get reachable if current reachable were to be updated from a given TS state
+        new_reachable = self.product.update_reachable(ts_state)
+
+        # If reachable states exist
+        if new_reachable:
+        	# If TS state is trap
+            if self.product.check_reachable_for_trap(new_reachable):
+                return 1
+            # If TS state is not a trap
+            else:
+                return -1
+        # If no reachables states, TS is not connected to current state
+        else:
+        	return 0
+
 	def find_next_move(self):
 		# Check if plan is in 'line' i.e. prefix or 'loop' i.e. suffix
 

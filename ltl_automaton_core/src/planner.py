@@ -18,6 +18,7 @@ from ltl_automaton_utilities import import_ts_file, state_models_from_ts
 
 #Import LTL automaton message definitions
 from ltl_automaton_msgs.msg import TransitionSystemState
+from ltl_automaton_msgs.srv import TrapCheck, TrapCheckResponse
 
 
 def show_automaton(automaton_graph):
@@ -110,6 +111,36 @@ class MainPlanner(object):
         #     print(ltl_planner.find_next_move())
         #     plan_iter += 1
 
+    #---------------------------------------------
+    # Callback for checking is given TS is a trap
+    #---------------------------------------------
+    def trap_check_callback(self, trap_check_req):
+        print "received check for trap request"
+        # Extract TS state from request message
+        ts_state = tuple(trap_check_req.ts_state)
+        # Create response message
+        res = TrapCheckResponse()
+
+        # Check if TS state is trap
+        is_trap = self.ltl_planner.is_trap(ts_state)
+
+        # TS state is trap
+        if is_trap == 1:
+            res.is_trap = True
+            res.is_connected = True
+        # TS state is not a trap
+        elif is_trap == -1:
+            res.is_trap = False
+            res.is_connected = True
+        # Error: TS state is not connected to current state
+        else:
+            res.is_trap = False
+            res.is_connected = False
+
+        # Return service response
+        return res
+
+
     def setup_pub_sub(self):
 
         # Initialize subscriber to provide current state of robot
@@ -117,6 +148,9 @@ class MainPlanner(object):
 
         # Initialize publisher to send plan commands
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
+
+        # Initialize check for trap service
+        self.trap_srv = rospy.Service('is_trap', TrapCheck, trap_check_callback)
 
 
     def ltl_state_callback(self, msg=TransitionSystemState()):
@@ -132,6 +166,9 @@ class MainPlanner(object):
         if state in self.robot_model.product.nodes():
 
             #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
+
+            #TODO try update reachable and if error (forbidden transition), replan
+            update_reachable
 
             # Check if plan is in prefix or suffix phase
             if self.ltl_planner.segment == 'line':
