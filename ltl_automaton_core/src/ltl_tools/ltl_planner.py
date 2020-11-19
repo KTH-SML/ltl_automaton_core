@@ -2,7 +2,7 @@
 from buchi import mission_to_buchi
 from product import ProdAut
 #from ts import distance, reach_waypoint
-from discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history
+from discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history, has_path_to_accept
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -90,12 +90,12 @@ class LTLPlanner(object):
     # if reached, no possible path to accept
     def is_trap(self, ts_state):
         # Get reachable if current reachable were to be updated from a given TS state
-        new_reachable = self.product.update_reachable(ts_state)
+        reachable_if_reached = self.product.get_reachable(ts_state)
 
         # If reachable states exist
-        if new_reachable:
+        if reachable_if_reached:
             # If TS state is trap
-            if self.product.check_reachable_for_trap(new_reachable):
+            if self.check_reachable_for_trap(reachable_if_reached):
                 return 1
             # If TS state is not a trap
             else:
@@ -103,6 +103,17 @@ class LTLPlanner(object):
         # If no reachables states, TS is not connected to current state
         else:
             return 0
+
+    #---------------------------------------------------------
+    # Check in a reachable set has a path to accepting states
+    #---------------------------------------------------------
+    # Returns True if reachable set is from a trap state
+    # (meaning there are no path to accepting from trap state reachable set)
+    def check_reachable_for_trap(self, reachable_set):
+        for s in reachable_set:
+            if has_path_to_accept(self.product, s):
+               return False
+        return True
 
     def intersect_accept(self, reachable_set, reach_ts):
         accept_set = self.product.graph['accept']

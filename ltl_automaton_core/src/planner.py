@@ -14,7 +14,7 @@ from ltl_tools.ltl_planner import LTLPlanner
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from ltl_automaton_utilities import import_ts_file, state_models_from_ts
+from ltl_automaton_utilities import import_ts_from_file, state_models_from_ts
 
 #Import LTL automaton message definitions
 from ltl_automaton_msgs.msg import TransitionSystemState
@@ -91,7 +91,7 @@ class MainPlanner(object):
 
     def build_automaton(self):
         # Import TS from config file
-        state_models = state_models_from_ts(import_ts_file('test_ts.yaml'), self.initial_ts_dict)
+        state_models = state_models_from_ts(import_ts_from_file(rospy.get_param('transition_system_textfile')), self.initial_ts_dict)
      
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model = TSModel(state_models)
@@ -102,23 +102,16 @@ class MainPlanner(object):
         #show_automaton(self.robot_model.product)
         #show_automaton(self.ltl_planner.product)
 
-        
-
-        # # Iterate through plan to check find_next_move()
-        # plan_iter = 0
-        # plan_end = 10
-        # print(ltl_planner.next_move)
-        # while (plan_iter <= plan_end):
-        #     print(ltl_planner.find_next_move())
-        #     plan_iter += 1
-
     #---------------------------------------------
     # Callback for checking is given TS is a trap
     #---------------------------------------------
     def trap_check_callback(self, trap_check_req):
         print "received check for trap request"
+
+        #TODO Add check for message malformed
+
         # Extract TS state from request message
-        ts_state = tuple(trap_check_req.ts_state)
+        ts_state = tuple(trap_check_req.ts_state.states)
         # Create response message
         res = TrapCheckResponse()
 

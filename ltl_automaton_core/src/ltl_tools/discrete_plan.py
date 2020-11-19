@@ -2,7 +2,7 @@
 
 from product import ProdAut_Run
 from collections import defaultdict
-from networkx import dijkstra_predecessor_and_distance
+from networkx import dijkstra_predecessor_and_distance, has_path
 import time 
 
 
@@ -271,3 +271,9 @@ def dijkstra_revise_once(product, run_segment, broken_edge_index):
 	for (bridge, cost) in dijkstra_targets(product, run_segment[broken_edge_index-1], set([run_segment[-1]])):
 		new_run_segment = run_segment[0:(broken_edge_index-1)] + bridge
 		return new_run_segment
+
+def has_path_to_accept(product, f_s):
+        for acc in product.graph['accept']:
+                if has_path(product, f_s, acc):
+                        return True
+        return False

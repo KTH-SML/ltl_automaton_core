@@ -3,10 +3,15 @@ import rospkg
 import os
 from networkx.classes.digraph import DiGraph
 
-def import_ts_file(file_name):
-    env_file = os.path.join(rospkg.RosPack().get_path('ltl_automaton_core'), 'config', file_name)
-    stream = open(env_file, 'r')
-    return yaml.load(stream)
+# Import TS and action attributes from file
+def import_ts_from_file(transition_system_textfile):
+    try:
+        # Get dictionary from yaml text file
+        transition_system = yaml.load(transition_system_textfile)
+        # TODO: Add a proper parse and check (dimensions, attr,...)
+        return transition_system
+    except:
+        raise ValueError("cannot load transition system from textfile")
 
 def state_models_from_ts(TS_dict, initial_states_dict=None):
     state_models = []

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from buchi import check_label_for_buchi_edge
+#from discrete_plan import has_path_to_accept
 
 from networkx.classes.digraph import DiGraph
 
@@ -134,22 +135,17 @@ class ProdAut(DiGraph):
         new_reachable = set()
         # Go through each product state in reachable states
         for f_s in self.reachable_states:
+            print "---------- check reachable state ----------"
+            print f_s
             # Go through all connected states and if TS states match, add it to the list
             for t_s in self.successors(f_s):
+                print "successor is"
+                print t_s
+                print "and ts node is"
+                print ts_node
                 if t_s[0] == ts_node:
                     new_reachable.add(t_s)
         return new_reachable
-
-    #---------------------------------------------------------
-    # Check in a reachable set has a path to accepting states
-    #---------------------------------------------------------
-    # Returns True if reachable set is from a trap state
-    # (meaning there are no path to accepting from trap state reachable set)
-    def check_reachable_for_trap(self, reachable_set):
-        for s in reachable_set:
-            if has_path_to_accept(self.product, s):
-               return False
-        return True
 
 class ProdAut_Run(object):
     # prefix, suffix in product run
