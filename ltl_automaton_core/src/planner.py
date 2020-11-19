@@ -97,6 +97,7 @@ class MainPlanner(object):
         self.robot_model = TSModel(state_models)
         self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task)
         self.ltl_planner.optimal()
+        self.curr_ts_state = self.ltl_planner.product.graph['ts'].graph['initial']
 
         #show_automaton(self.robot_model.product)
         #show_automaton(self.ltl_planner.product)
@@ -163,7 +164,10 @@ class MainPlanner(object):
         # Check if state is in TS
         #print('(in ltl_state_callback) msg state = ' + str(state))
         #print('in ltl_state_callback) robotmodel.product =' + str(self.robot_model.product.nodes()))
-        if state in self.robot_model.product.nodes():
+        if (state in self.robot_model.product.nodes()) and not(state == self.curr_ts_state):
+
+            # Update current state
+            self.curr_ts_state = state
 
             #------------------------------------------------------------------
             # Try update reachable and if error (forbidden transition), replan

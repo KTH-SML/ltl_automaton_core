@@ -32,8 +32,8 @@ class LTLPlanner(object):
         elif style == 'on-the-fly':
             # on-the-fly construction
             self.product.build_initial()
-            self.product.build_accept()
-            self.run, plantime = dijkstra_plan_optimal(self.product, self.beta)
+            self.product.build_accept() 
+            self.run, plantime = dijkstra_plan_networkX(self.product, self.beta)
             if self.run == None:
                 print '---No valid plan has been found!---'
                 print '---Check you FTS or task---'
@@ -142,7 +142,7 @@ class LTLPlanner(object):
         # Set new initial state in TS
         self.product.graph['ts'].set_initial(ts_state)
         # Use on-the-fly to only rebuild the initial product node
-        optimal(style="on-the-fly")
+        self.optimal(style="on-the-fly")
 
     def replan(self):
         '''Create new system plan based on previous history'''
