@@ -72,6 +72,9 @@ class ProdAut(DiGraph):
                 init_prod_node = (ts_init, buchi_init)
                 self.graph['initial'].add(init_prod_node)
 
+        # Build initial reachable set from initial state
+        self.reachable_states = set(self.graph['initial'])
+
     #-----------------------------
     # Build accept product states
     #-----------------------------
@@ -123,27 +126,19 @@ class ProdAut(DiGraph):
                         yield t_prod_node, total_weight
             self.node[f_prod_node]['marker'] = 'visited'
 
-    #---------------------------------------
-    # Update reachable states from previous
-    #  reachable set and a given TS state 
-    #---------------------------------------
-    def update_reachable(self, ts_node):
-            new_reachable = set()
-            # Go through each product state in reachable states
-            for f_s in self.reachable_states:
-                    # Go through all connected states and if TS states match, add it to the list
-                    for t_s in self.product.successors(f_s):
-                            if t_s[0] == ts_node:
-                                    new_reachable.add(t_s)
-
-            # print("===================")
-            # print("reached ts:")
-            # print ts_node
-            # print("-----")
-            # print("New reachable are:")
-            # print(new_reachable)
-            # print("-----")
-            return new_reachable
+    #------------------------------------
+    # Get reachable states from previous
+    # reachable set and a given TS state 
+    #------------------------------------
+    def get_reachable(self, ts_node):
+        new_reachable = set()
+        # Go through each product state in reachable states
+        for f_s in self.reachable_states:
+            # Go through all connected states and if TS states match, add it to the list
+            for t_s in self.successors(f_s):
+                if t_s[0] == ts_node:
+                    new_reachable.add(t_s)
+        return new_reachable
 
     #---------------------------------------------------------
     # Check in a reachable set has a path to accepting states

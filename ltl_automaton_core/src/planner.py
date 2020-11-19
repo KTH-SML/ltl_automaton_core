@@ -172,17 +172,20 @@ class MainPlanner(object):
             #------------------------------------------------------------------
             # Try update reachable and if error (forbidden transition), replan
             #------------------------------------------------------------------
-            # if not self.ltl_planner.product.update_reachable(state):
-            #     rospy.logerr('Can not update reachable - forbidden transition, replanning...')
+            if not self.ltl_planner.update_reachable(state):
+                rospy.logerr('Can not update reachable - forbidden transition, replanning...')
 
-            #     # Replan
-            #     self.ltl_planner.replan_from_ts_state(state)
+                # Replan
+                self.ltl_planner.replan_from_ts_state(state)
                 
-            #     # Publish next move
-            #     rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
-            #     self.plan_pub.publish(self.ltl_planner.next_move)
+                # Publish next move
+                rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
+                self.plan_pub.publish(self.ltl_planner.next_move)
 
-            #     return
+                return
+            print "========= NEW REACHABLE =========="
+            print self.ltl_planner.product.reachable_states
+            print "=================================="
 
 
             #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))

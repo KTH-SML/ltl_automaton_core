@@ -63,7 +63,31 @@ class LTLPlanner(object):
         self.next_move = self.run.pre_plan[self.index]
         return plantime
 
-    # Check if given TS state in trap (if reached, no possible path to accept)
+    #-----------------------------
+    #  Update current reachable   
+    # states using given TS state 
+    #-----------------------------
+    def update_reachable(self, ts_node):
+        # Get reachable states
+        self.product.reachable_states = self.product.get_reachable(ts_node)
+
+        if self.start_suffix():
+            print '=============================='
+            print '--- New suffix execution---'
+            print '=============================='               
+            self.product.reachable_states = self.intersect_accept(self.product.reachable_states, ts_node)
+
+        # If reachable set in not empty, return true
+        if self.product.reachable_states:
+            return True
+        # If no states in reachable set, return false
+        else:
+            return False
+
+    #---------------------------------
+    # Check if given TS state in trap 
+    #---------------------------------
+    # if reached, no possible path to accept
     def is_trap(self, ts_state):
         # Get reachable if current reachable were to be updated from a given TS state
         new_reachable = self.product.update_reachable(ts_state)
@@ -79,6 +103,23 @@ class LTLPlanner(object):
         # If no reachables states, TS is not connected to current state
         else:
             return 0
+
+    def intersect_accept(self, reachable_set, reach_ts):
+        accept_set = self.product.graph['accept']
+        inter_set = set([s for s in accept_set if s[0] == reach_ts])
+        return inter_set
+
+
+    def start_suffix(self):
+        print "=================="
+        print "START SUFFIX TEST"
+        print "=================="
+        if ((self.segment == 'loop') and (self.index == 0)):
+            print "RETURN TRUE"
+            return True
+        else:
+            print "RETURN FALSE"
+            return False
 
     def find_next_move(self):
         # Check if plan is in 'line' i.e. prefix or 'loop' i.e. suffix
