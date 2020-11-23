@@ -14,7 +14,7 @@ from ltl_tools.ltl_planner import LTLPlanner
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from ltl_automaton_utilities import import_ts_from_file, state_models_from_ts
+from ltl_automaton_utilities import state_models_from_ts, import_ts_from_file
 
 #Import LTL automaton message definitions
 from ltl_automaton_msgs.msg import TransitionSystemState

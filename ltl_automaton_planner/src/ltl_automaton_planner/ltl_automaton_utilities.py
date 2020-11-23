@@ -1,6 +1,6 @@
+#!/usr/bin/env python
+import rospy
 import yaml
-import rospkg
-import os
 from networkx.classes.digraph import DiGraph
 
 # Import TS and action attributes from file
