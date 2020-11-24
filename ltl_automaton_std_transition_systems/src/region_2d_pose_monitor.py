@@ -8,7 +8,7 @@ from roslib.message import get_message_class
 from tf.transformations import euler_from_quaternion
 # For function "import_ts_from_file"
 from ltl_automaton_planner.ltl_automaton_utilities import import_ts_from_file
-from ltl_automaton_std_transition_systems.msg import RegionDistance
+from ltl_automaton_msgs.srv import ClosestState
 
 #=====================================
 #      Monitor agent pose and
@@ -16,7 +16,8 @@ from ltl_automaton_std_transition_systems.msg import RegionDistance
 #=====================================
 class Region2DPoseStateMonitor(object):
     def __init__(self):
-        self.state=None
+        self.state = None
+        self.curr_pose = None
 
         self.init_params()
 
@@ -48,7 +49,7 @@ class Region2DPoseStateMonitor(object):
         self.current_region_pub = rospy.Publisher("current_region", String, latch=True, queue_size=10)
 
         # Publisher of closest region
-        self.closest_region_pub = rospy.Publisher("closest_region", RegionDistance, latch=True, queue_size=10)
+        self.closest_region_srv = rospy.Service("closest_region", ClosestState, closest_state_callback)
 
     #-------------------------------------------------------------------
     # Check agent region using pose and update current region if needed
@@ -110,7 +111,7 @@ class Region2DPoseStateMonitor(object):
     #----------------------------
     # Check agent closest region
     #----------------------------
-    def check_closest_region(self, pose):
+    def closest_region(self, pose):
         # If current region is known
         if self.state:
             # Go through all connected states
@@ -154,15 +155,9 @@ class Region2DPoseStateMonitor(object):
                     closest_region = str(reg)
 
         if self.state and closest_region:
-            closest_region_msg = RegionDistance()
-            closest_region_msg.region = closest_region
-            closest_region_msg.distance = prev_dist
-            self.closest_region_pub.publish(closest_region_msg)
+            return closest_region, prev_dist
         else:
-            closest_region_msg = RegionDistance()
-            closest_region_msg.region = 'None'
-            closest_region_msg.distance = 0.0
-            self.closest_region_pub.publish(closest_region_msg)      
+            return None, None
 
 
     #-----------------------
@@ -267,34 +262,59 @@ class Region2DPoseStateMonitor(object):
             msg_class = get_message_class(message_type)
             pose_msg = msg_class().deserialize(anymsg._buff)
 
-            #If message type is geometry_msgs/Pose
+            # If message type is geometry_msgs/Pose
             if (message_type == 'geometry_msgs/Pose'):
-                #Check pose for region
-                self.check_curr_region(pose_msg)
-                self.check_closest_region(pose_msg)
+                # Process incoming pose message
+                self.handle_pose_msg(pose_msg)
 
-            #If message type is geometry_msgs/PoseWithCovariance
+            # If message type is geometry_msgs/PoseWithCovariance
             elif (message_type == 'geometry_msgs/PoseWithCovariance'):
-                #Check pose for region
-                self.check_curr_region(pose_msg.pose)
-                self.check_closest_region(pose_msg)
+                # Process incoming pose message
+                self.handle_pose_msg(pose_msg.pose)
 
-            #If message type is geometry_msgs/PoseStamped
+            # If message type is geometry_msgs/PoseStamped
             elif (message_type == 'geometry_msgs/PoseStamped'):
-                #Check pose for region
-                self.check_curr_region(pose_msg.pose)
-                self.check_closest_region(pose_msg)
+                # Process incoming pose message
+                self.handle_pose_msg(pose_msg.pose)
 
-            #If message type is geometry_msgs/PoseWithCovarianceStamped
+            # If message type is geometry_msgs/PoseWithCovarianceStamped
             elif (message_type == 'geometry_msgs/PoseWithCovarianceStamped'):
-                #Check pose for region
-                self.check_curr_region(pose_msg.pose.pose)
-                self.check_closest_region(pose_msg)
-            #Else if message is not of a supported type
+                # Process incoming pose message
+                self.handle_pose_msg(pose_msg.pose.pose)
+
+            # Else if message is not of a supported type
             else:
                 rospy.logerr('Region state monitor: message type '+message_type+' is not supported for 2D pose region monitoring')
         except ValueError as e:
             rospy.logerr('Region state monitor: could not process incoming message: ' + e)
+
+    #-------------------------------
+    # Process received pose message
+    #-------------------------------
+    def handle_pose_msg(self, pose_msg):
+        # Save current pose
+        self.curr_pose = pose_msg
+        # Check pose for region
+        self.check_curr_region(pose_msg)
+    
+    #-----------------------------------------------  
+    # Service callback for returning closest region
+    #-----------------------------------------------
+    def closest_state_callback(self, req):
+        # Create service response message
+        res = ClosestStateResponse()
+        region = None
+
+        # Get closest region and distance to closest region using current pose
+        if self.curr_pose:
+            region, distance = self.closest_region(self.curr_pose)
+            # If function returned region and distance, add them to response message
+            if region:
+                res.closest_region = region
+                res.metric = distance
+        # Publish response message, with empty region and distance field if closest region not found
+        return res
+
 
 
 #==============================
