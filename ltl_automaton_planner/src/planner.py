@@ -46,6 +46,8 @@ class MainPlanner(object):
     def init_params(self):
         #Get parameters from parameter server
         self.agent_name = rospy.get_param('agent_name')
+        self.initial_beta = rospy.get_param('initial_beta', 1000)
+        self.gamma = rospy.get_param('gamma', 10)
 
         # Get TS from param
         transition_system_textfile = rospy.get_param('transition_system_textfile')
@@ -95,7 +97,7 @@ class MainPlanner(object):
      
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model = TSModel(state_models)
-        self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task)
+        self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
         self.ltl_planner.optimal()
         self.curr_ts_state = self.ltl_planner.product.graph['ts'].graph['initial']
 

@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 class LTLPlanner(object):
-    def __init__(self, ts, hard_spec, soft_spec):
+    def __init__(self, ts, hard_spec, soft_spec, beta=1000, gamma=10):
         buchi = mission_to_buchi(hard_spec, soft_spec)
-        self.product = ProdAut(ts, buchi)
+        self.product = ProdAut(ts, buchi, beta)
         self.Time = 0
         self.cur_pose = None
         self.trace = [] # record the regions been visited
@@ -18,22 +18,25 @@ class LTLPlanner(object):
         # record [(time, prefix, suffix, prefix_cost, suffix_cost, total_cost)]
         self.com_log = []
         # record [(time, no_messages)]
+        self.beta = beta                    # importance of taking soft task into account
+        self.gamma = gamma                  # cost ratio between prefix and suffix
 
-    def optimal(self, beta=10, style='static'):
-        self.beta = beta
+
+    def optimal(self, style='static'):
+        
         if style == 'static':
             # full graph construction
             self.product.graph['ts'].build_full()
             self.product.build_full()
-            self.run, plantime = dijkstra_plan_networkX(self.product, self.beta)
+            self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
         elif style == 'ready':
             self.product.build_full()
-            self.run, plantime = dijkstra_plan_networkX(self.product, self.beta)
+            self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
         elif style == 'on-the-fly':
             # on-the-fly construction
             self.product.build_initial()
             self.product.build_accept() 
-            self.run, plantime = dijkstra_plan_networkX(self.product, self.beta)
+            self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
             if self.run == None:
                 print '---No valid plan has been found!---'
                 print '---Check you FTS or task---'

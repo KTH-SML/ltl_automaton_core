@@ -9,7 +9,7 @@ import time
 #===========================================
 #optimal initial synthesis
 #===========================================
-def dijkstra_plan_networkX(product, beta=10):
+def dijkstra_plan_networkX(product, gamma=10):
 	# requires a full construct of product automaton
 	start = time.time()
 	runs = {}
@@ -37,7 +37,7 @@ def dijkstra_plan_networkX(product, beta=10):
 		line_pre, line_dist = dijkstra_predecessor_and_distance(product, prod_init)
 		for target in loop.iterkeys():
 			if target in line_dist:
-				line[target] = line_dist[target]+beta*loop[target][0]
+				line[target] = line_dist[target]+gamma*loop[target][0]
 		if line:
 			opti_targ = min(line, key = line.get)
 			prefix = compute_path_from_pre(line_pre, opti_targ)
@@ -45,8 +45,8 @@ def dijkstra_plan_networkX(product, beta=10):
 			runs[(prod_init, opti_targ)] = (prefix, precost, loop[opti_targ][1], loop[opti_targ][0])
 	# best combination
 	if runs:
-		prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + beta*p[3])
-		run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+beta*sufcost)
+		prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + gamma*p[3])
+		run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+gamma*sufcost)
 		print '=================='
 		print 'Dijkstra_plan_networkX done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost)
 		return run, time.time()-start
@@ -56,7 +56,7 @@ def dijkstra_plan_networkX(product, beta=10):
         return None, None
 
 
-def dijkstra_plan_optimal(product, beta=10, start_set=None):
+def dijkstra_plan_optimal(product, gamma=10, start_set=None):
 	start = time.time()
 	#print 'dijkstra plan started!'
 	runs = {}
@@ -81,15 +81,15 @@ def dijkstra_plan_optimal(product, beta=10, start_set=None):
 				runs[(prefix[0], prefix[-1])] = (prefix, precost, suffix, sufcost)
 				#print 'find run from %s to %s and back' %(str(init_prod_node), str(prefix[-1]))
 	if runs:
-	 	prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + beta*p[3])
-	 	run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+beta*sufcost)
+	 	prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + gamma*p[3])
+	 	run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+gamma*sufcost)
 	 	#print '\n==================\n'
 	 	print 'optimal_dijkstra_olf done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost)
 	 	return run, time.time()-start
 	print 'no accepting run found in optimal planning!'
 
 
-def dijkstra_plan_bounded(product, time_limit=3, beta=10):
+def dijkstra_plan_bounded(product, time_limit=3, gamma=10):
 	start = time.time()
 	print 'dijkstra plan started!'
 	runs = {}
@@ -112,8 +112,8 @@ def dijkstra_plan_bounded(product, time_limit=3, beta=10):
 				#print 'find run from %s to %s and back' %(str(init_prod_node), str(prefix[-1]))
 			if time.time()-start > time_limit:  # time limit has reached
 				if runs:
-				 	prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + beta*p[3])
-				 	run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+beta*sufcost)
+				 	prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + gamma*p[3])
+				 	run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+gamma*sufcost)
 				 	print 'optimal_dijkstra done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost)
 				 	return run, time.time()-start
 	print 'no accepting run found in optimal planning!'
