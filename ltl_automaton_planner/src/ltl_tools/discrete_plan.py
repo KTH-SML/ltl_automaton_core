@@ -277,3 +277,9 @@ def has_path_to_accept(product, f_s):
                 if has_path(product, f_s, acc):
                         return True
         return False
+
+def has_path_to_accept_with_cycle(product, f_s):
+        for acc in product.graph['accept_with_cycle']:
+            if has_path(product, f_s, acc):
+                return True
+            return False

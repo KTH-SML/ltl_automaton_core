@@ -2,7 +2,7 @@
 from buchi import mission_to_buchi
 from product import ProdAut
 #from ts import distance, reach_waypoint
-from discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history, has_path_to_accept
+from discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history, has_path_to_accept, has_path_to_accept_with_cycle
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -114,7 +114,7 @@ class LTLPlanner(object):
     # (meaning there are no path to accepting from trap state reachable set)
     def check_reachable_for_trap(self, reachable_set):
         for s in reachable_set:
-            if has_path_to_accept(self.product, s):
+            if has_path_to_accept_with_cycle(self.product, s):
                return False
         return True
 

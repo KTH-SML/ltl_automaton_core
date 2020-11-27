@@ -4,11 +4,12 @@ from buchi import check_label_for_buchi_edge
 #from discrete_plan import has_path_to_accept
 
 from networkx.classes.digraph import DiGraph
+from networkx import find_cycle, NetworkXNoCycle
 
 
 class ProdAut(DiGraph):
     def __init__(self, ts, buchi, beta=1000):
-        DiGraph.__init__(self, ts=ts, buchi=buchi, beta=beta, initial=set(), accept=set(), type='ProdAut')
+        DiGraph.__init__(self, ts=ts, buchi=buchi, beta=beta, initial=set(), accept=set(), accept_with_cycle = set(), type='ProdAut')
 
     # Build product automaton of TS and büchi by exploring every node combination and adding edges when required
     def build_full(self):
@@ -32,6 +33,8 @@ class ProdAut(DiGraph):
                             total_weight = cost + self.graph['beta']*dist
                             if truth:
                                 self.add_edge(f_prod_node, t_prod_node, transition_cost=cost, soft_task_dist=dist, weight=total_weight, action=action)
+
+        self.build_accept_with_cycle()
 
         # Build initial reachable set from initial state
         self.reachable_states = set(self.graph['initial'])
@@ -102,6 +105,19 @@ class ProdAut(DiGraph):
                 # If Büchi state is an accept state, build composed node and add it to the product accept set
                 self.graph['accept'].add(accept_prod_node)
 
+    def build_accept_with_cycle(self):
+        # self.graph['ts'].build_full()
+        for accept_state in self.graph['accept']:
+            try:
+                # print 'Accepting state in consider is', accept_state
+                find_cycle(self,accept_state,orientation="original")
+            except NetworkXNoCycle:
+                # print accept_state, 'fails to find a cycle'
+                pass
+            else:
+                # print accept_state, 'finds a cycle'
+                self.graph['accept_with_cycle'].add(accept_state)
+
     def accept_predecessors(self, accept_node):
         pre_set = set()
         t_ts_node, t_buchi_node = self.projection(accept_node)
@@ -145,14 +161,8 @@ class ProdAut(DiGraph):
         new_reachable = set()
         # Go through each product state in reachable states
         for f_s in self.reachable_states:
-            print "---------- check reachable state ----------"
-            print f_s
             # Go through all connected states and if TS states match, add it to the list
             for t_s in self.successors(f_s):
-                print "successor is"
-                print t_s
-                print "and ts node is"
-                print ts_node
                 if t_s[0] == ts_node:
                     new_reachable.add(t_s)
         return new_reachable
