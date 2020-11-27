@@ -157,6 +157,28 @@ class VelCmdMixer(object):
             #print 'No Human inputs. Autonomous controller used.'
             self.mix_control = self.navi_control
 
+    #
+    #
+    #
+    def smooth_mix(self, tele_control, navi_control, dist_to_trap):
+        tele_control[0] = self.saturate(tele_control[0], max_linear_x_vel)
+        tele_control[1] = self.saturate(tele_control[1], max_linear_y_vel)
+        tele_control[2] = self.saturate(tele_control[2], max_linear_z_vel)
+
+        self.gain = rho(self.dist_to_trap-self.ds)/(rho(self.dist_to_trap-self.ds)+rho(self.epsilon +self.ds-self.dist_to_trap))
+        #print 'human-in-the-loop gain is ' + str(self.gain)
+        mix_control = [0.0,0.0,0.0]
+        mix_control[0] = (1-self.gain)*navi_control[0] + self.gain*tele_control[0]
+        mix_control[1] = (1-self.gain)*navi_control[1] + self.gain*tele_control[1]
+        mix_control[2] = navi_control[2]
+        return mix_control
+
+    def saturate(self, command, max_value):
+        if command > max_value:
+            command = max_value
+        else if command < -max_value:
+            command = -max_value
+        return command
 
     #-------------------------------------
     # Rho function needed for mix formula
