@@ -8,7 +8,7 @@ from roslib.message import get_message_class
 from tf.transformations import euler_from_quaternion
 # For function "import_ts_from_file"
 from ltl_automaton_planner.ltl_automaton_utilities import import_ts_from_file
-from ltl_automaton_msgs.srv import ClosestState
+from ltl_automaton_msgs.srv import ClosestState, ClosestStateResponse
 
 #=====================================
 #      Monitor agent pose and
@@ -49,7 +49,7 @@ class Region2DPoseStateMonitor(object):
         self.current_region_pub = rospy.Publisher("current_region", String, latch=True, queue_size=10)
 
         # Publisher of closest region
-        self.closest_region_srv = rospy.Service("closest_region", ClosestState, closest_state_callback)
+        self.closest_region_srv = rospy.Service("closest_region", ClosestState, self.closest_state_callback)
 
     #-------------------------------------------------------------------
     # Check agent region using pose and update current region if needed
@@ -310,7 +310,7 @@ class Region2DPoseStateMonitor(object):
             region, distance = self.closest_region(self.curr_pose)
             # If function returned region and distance, add them to response message
             if region:
-                res.closest_region = region
+                res.closest_state = region
                 res.metric = distance
         # Publish response message, with empty region and distance field if closest region not found
         return res
