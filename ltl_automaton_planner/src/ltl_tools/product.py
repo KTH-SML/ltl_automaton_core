@@ -40,6 +40,34 @@ class ProdAut(DiGraph):
         self.reachable_states = set(self.graph['initial'])
         #self.reachable_states = self.update_reachable(self.graph['ts'].graph['initial'])
 
+    # Build required for IRL (TODO: check exactly how this works)
+    def build_full_margin(self, opt_path):
+        if len(opt_path) >= 2:
+            opt_edges = zip(opt_path[0::2], opt_path[1::2])
+        for f_ts_node in self.graph['ts'].nodes():
+            for f_buchi_node in self.graph['buchi'].nodes():
+                f_prod_node = self.composition(f_ts_node, f_buchi_node)
+                                  
+                for t_ts_node in self.graph['ts'].successors(f_ts_node):
+                    for t_buchi_node in self.graph['buchi'].successors(f_buchi_node):
+                            t_prod_node = self.composition(t_ts_node, t_buchi_node)
+
+                            label = self.graph['ts'].node[f_ts_node]['label']
+                            cost = self.graph['ts'][f_ts_node][t_ts_node]['weight']
+                            truth, dist = check_label_for_buchi_edge(self.graph['buchi'], label, f_buchi_node, t_buchi_node)
+                            total_weight = cost + self.graph['beta']*dist + 1
+
+                            if (f_prod_node, t_prod_node) in opt_edges:
+                                k = 1
+                            else:
+                                k = 0
+                            total_weight -= k
+                            if truth:
+                                self.add_edge(f_prod_node, t_prod_node, weight=total_weight, transition_cost=cost, soft_task_dist=dist)
+
+        self.build_accept_with_cycle()
+
+
     def update_beta(self, beta):
         # update the saved parameter for beta
         self.graph['beta'] = beta

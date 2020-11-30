@@ -283,3 +283,14 @@ def has_path_to_accept_with_cycle(product, f_s):
             if has_path(product, f_s, acc):
                 return True
             return False
+
+def compute_path_ac_d(product, path):
+    ac_d = 0
+    for i in range(len(path)-1):
+        ac_d += product[path[i]][path[i+1]]['soft_task_dist']
+    return ac_d
+
+# Out of the set of all possible product automaton runs, return the one where soft constraint is least violated
+def select_least_violating_run(product, posb_runs):
+    least_violating_run = min(posb_runs, key=lambda p: compute_path_ac_d(product, p))
+    return least_violating_run

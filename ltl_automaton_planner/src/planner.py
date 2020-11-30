@@ -32,7 +32,7 @@ def show_automaton(automaton_graph):
 
 class MainPlanner(object):
     def __init__(self):
-
+    	# init parameters, automaton, etc...
         self.init_params();
 
         self.build_automaton();
@@ -101,6 +101,9 @@ class MainPlanner(object):
         self.ltl_planner.optimal()
         self.curr_ts_state = self.ltl_planner.product.graph['ts'].graph['initial']
 
+        # initialize storage of set of possible runs in product
+    	self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
+
         #show_automaton(self.robot_model.product)
         #show_automaton(self.ltl_planner.product)
 
@@ -148,6 +151,9 @@ class MainPlanner(object):
         # Initialize check for trap service
         self.trap_srv = rospy.Service('is_trap', TrapCheck, self.trap_check_callback)
 
+        # Initialize subscriber to IRL requests
+        self.irl_sub = rospy.Subscriber('irl_request', std_msgs.msg.Bool, self.irl_request_callback, queue_size=1)
+
 
     def ltl_state_callback(self, msg=TransitionSystemState()):
         
@@ -181,6 +187,13 @@ class MainPlanner(object):
             print "========= NEW REACHABLE =========="
             print self.ltl_planner.product.reachable_states
             print "=================================="
+
+            #------------------------------------------------------------------
+            # Try update set of possible runs and if error, display warning
+            #------------------------------------------------------------------
+            self.posb_runs = self.ltl_planner.update_posb_runs(self.posb_runs, state)
+            if not self.posb_runs:
+            	print "WARNING: Empty set of possible runs"
 
 
             #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
@@ -221,6 +234,16 @@ class MainPlanner(object):
             #ERROR: unknown state (not part of TS)
             self.plan_pub.publish('None')
             rospy.logwarn('State is not in TS plan!')
+
+    def irl_request_callback(self, msg=False):
+    	if msg:
+			print('Planner.py **Relearning** and publishing next move')
+			self.ltl_planner.irl_jit(self.posb_runs)
+			# Replan
+			self.ltl_planner.replan_from_ts_state(self.curr_ts_state)
+			self.ltl_planner.find_next_move()
+			self.plan_pub.publish(self.ltl_planner.next_move)
+
 
 #==============================
 #             Main
