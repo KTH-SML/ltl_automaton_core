@@ -39,9 +39,8 @@ class VelCmdMixer(object):
 
         # Get human input timeout (in seconds) from ROS parameters
         self.timeout = rospy.get_param("~timeout", 0.2)
-        # Init last received human input time by deducting timeout from current time
-        # to ensure timeout at initialization
-        self.last_received_human_input = rospy.Time.now() - rospy.Duration.from_sec(self.timeout)
+        # Init last received human input time
+        self.last_received_human_input = None
 
         # Get velocity component saturations
         self.max_linear_x_vel = rospy.get_param("~max_linear_x_vel", 0.7)
@@ -111,9 +110,10 @@ class VelCmdMixer(object):
         self.planner_input_vel = msg
 
         # If human input received recently and TS state is known
-        if (rospy.Time.now() - self.last_received_human_input < self.timeout) and (self.curr_ts_state):
-            # Run controller mix and publish
-            self.mix_vel_cmd_pub.publish(self.control_mixer())
+        if self.last_received_human_input:
+            if (rospy.Time.now() - self.last_received_human_input < self.timeout) and (self.curr_ts_state):
+                # Run controller mix and publish
+                self.mix_vel_cmd_pub.publish(self.control_mixer())
 
     #--------------------------------
     # Human velocity command input
