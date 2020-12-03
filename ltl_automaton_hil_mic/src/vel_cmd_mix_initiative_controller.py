@@ -19,23 +19,36 @@ class VelCmdMixer(object):
         # Get parameters
         self.load_params()
 
+        # Setup subscribers and publishers
+        self.set_pub_sub()
+
     #--------------------------------------------------
     # Load controller parameters from parameter server
     #--------------------------------------------------
     def load_params(self):
+        self.curr_ts_state = None
+
         # Get epsilon gain from ROS parameters
-        self.epsilon = rospy.get_param("gains/epsilon", 1.5)
+        self.epsilon = rospy.get_param("~epsilon", 1.5)
+
+        # Get safety distance from ROS parameters
+        self.ds = rospy.get_param("~ds", 1.2)
 
         # Get deadband from ROS parameters
-        self.deadband = rospy.get_param("gain/deadband", 0.2)
+        self.deadband = rospy.get_param("~deadband", 0.2)
+
+        # Get human input timeout (in seconds) from ROS parameters
+        self.timeout = rospy.get_param("~timeout", 0.2)
+        # Init last received human input time
+        self.last_received_human_input = None
 
         # Get velocity component saturations
-        self.max_linear_x_vel = rospy.get_param("gain/max_linear_x_vel", 0.7)
-        self.max_linear_y_vel = rospy.get_param("gain/max_linear_y_vel", 0.7)
-        self.max_linear_z_vel = rospy.get_param("gain/max_linear_z_vel", 0.7)
-        self.max_angular_x_vel = rospy.get_param("gain/max_angular_x_vel", 0.5)
-        self.max_angular_y_vel = rospy.get_param("gain/max_angular_y_vel", 0.5)
-        self.max_angular_z_vel = rospy.get_param("gain/max_angular_z_vel", 0.5)
+        self.max_linear_x_vel = rospy.get_param("~max_linear_x_vel", 0.7)
+        self.max_linear_y_vel = rospy.get_param("~max_linear_y_vel", 0.7)
+        self.max_linear_z_vel = rospy.get_param("~max_linear_z_vel", 0.7)
+        self.max_angular_x_vel = rospy.get_param("~max_angular_x_vel", 0.5)
+        self.max_angular_y_vel = rospy.get_param("~max_angular_y_vel", 0.5)
+        self.max_angular_z_vel = rospy.get_param("~max_angular_z_vel", 0.5)
 
         # Node frequency
         self.frequency = rospy.get_param("node_frequency", 50)
@@ -62,16 +75,16 @@ class VelCmdMixer(object):
         trap_cheq_srv = rospy.ServiceProxy("check_for_trap", TrapCheck)
 
         # Set mix initiave controller output
-        mix_vel_cmd_pub = rospy.Publisher("mix_cmd_vel", Twist, queue=50)
+        mix_vel_cmd_pub = rospy.Publisher("mix_cmd_vel", Twist, queue_size=50)
 
         # Set agent TS state subscriber
-        rospy.Subscriber("ts_state", TransitionSystemState, self.ts_state_callback ,queue=50)
-
-        # Set planner input subscriber
-        rospy.Subscriber("planner_cmd_vel", Twist, self.planner_cmd_callback ,queue=50)
+        rospy.Subscriber("ts_state", TransitionSystemState, self.ts_state_callback ,queue_size=50)
 
         # Set human input planner
-        rospy.Subscriber("teleop_cmd_vel", Twist, self.teleop_cmd_callback, queue=50)
+        rospy.Subscriber("teleop_cmd_vel", Twist, self.teleop_cmd_callback, queue_size=50)
+
+        # Set planner input subscriber
+        rospy.Subscriber("planner_cmd_vel", Twist, self.planner_cmd_callback ,queue_size=50)
 
     #-------------------------
     # Agent TS state callback
@@ -84,7 +97,7 @@ class VelCmdMixer(object):
         # If lenght of states is different from length of state dimension names, message is malformed
         # print warning and ignore message
         if not (len(msg.state_dimension_names) == len(msg.states)):
-            rospy.logwarn("Received TS state but number of states: %i doesn't correpond to number of state dimensions: %i",
+            rospy.logwarn("Received TS state but number of states: %i doesn't correpond to number of state dimensions: %i"
                           % (len(msg.states),len(msg.state_dimension_names)))
         # Else message is valid, save it
         else:
@@ -96,15 +109,18 @@ class VelCmdMixer(object):
     def planner_cmd_callback(self, msg):
         self.planner_input_vel = msg
 
-
-        #TODO Run
-        #IF human input received, run if TS state received as well
+        # If human input received recently and TS state is known
+        if self.last_received_human_input:
+            if (rospy.Time.now() - self.last_received_human_input < self.timeout) and (self.curr_ts_state):
+                # Run controller mix and publish
+                self.mix_vel_cmd_pub.publish(self.control_mixer())
 
     #--------------------------------
     # Human velocity command input
     #--------------------------------
     def teleop_cmd_callback(self, msg):
         self.teleop_input_vel = msg
+        self.last_received_human_input = rospy.Time.now()
 
     #------------------------------------------------
     # Check if risk of trap and get distance to trap
@@ -114,7 +130,7 @@ class VelCmdMixer(object):
         closest_reg_req = ClosestStateRequest()
         closest_reg = closest_reg_srv()
         # If service returns a closest state
-        if closest_reg.closest_state not "":
+        if closest_reg.closest_state:
             # Create check for trap request from TS state
             ts_state_to_check = self.curr_ts_state
             for i in range(len(self.curr_ts_state.state_dimension_names)):
@@ -136,58 +152,88 @@ class VelCmdMixer(object):
         return False
            
 
-    def controller(self):
-        #print 'telecontrol signal is' + str(self.tele_control)
-        tele_control_x = self.tele_control[0]
-        tele_control_y = self.tele_control[1]
-        tele_magnitude = tele_control_x**2 + tele_control_y**2
+    def control_mixer(self, teleop_vel_cmd, planner_vel_cmd):
+        #print 'telecontrol signal is' + str(self.tele_control
+        tele_magnitude = math.sqrt(teleop_vel_cmd.linear.x**2
+                                 + teleop_vel_cmd.linear.y**2
+                                 + teleop_vel_cmd.linear.z**2)
 
         if tele_magnitude >= self.deadband:
             #print '--- Human inputs detected ---'
-            if self.dist_to_trap >=0:
+
+            # Check for trap
+            dist_to_trap = self.check_for_trap()
+
+            # If dist to trap returns a value, compute mix
+            if dist_to_trap:
                 # print 'Distance to trap states in product: %.2f' %self.dist_to_trap
-                self.mix_control = self.smooth_mix(self.tele_control, self.navi_control, self.dist_to_trap)
+                teleop_vel_cmd = self.bound_vel_cmd(teleop_vel_cmd)
+                self.mix_control = self.smooth_mix(teleop_vel_cmd, planner_vel_cmd, dist_to_trap, self.ds, self.epsilon)
                 # print 'mix_control: %s ||| navi_control: %s ||| tele_control: %s ||| gain: %.2f' %(self.mix_control, self.navi_control, self.tele_control, self.gain)
+            
+            # If distance to trap returns false, no trap is close, use human input
             else:
                 #if no obstacle is close, use human command
                 # print 'No trap states are close'
-                self.dist_to_trap = 1000
-                self.mix_control = self.smooth_mix(self.tele_control, self.navi_control, self.dist_to_trap)
+                teleop_vel_cmd = self.bound_vel_cmd(teleop_vel_cmd)
+                self.mix_control = self.teleop_vel_cmd
         else:
             #print 'No Human inputs. Autonomous controller used.'
             self.mix_control = self.navi_control
 
-    #
-    #
-    #
-    def smooth_mix(self, tele_control, navi_control, dist_to_trap):
-        tele_control[0] = self.saturate(tele_control[0], max_linear_x_vel)
-        tele_control[1] = self.saturate(tele_control[1], max_linear_y_vel)
-        tele_control[2] = self.saturate(tele_control[2], max_linear_z_vel)
+        return self.mix_control
 
-        self.gain = rho(self.dist_to_trap-self.ds)/(rho(self.dist_to_trap-self.ds)+rho(self.epsilon +self.ds-self.dist_to_trap))
+    #------------------------------------------------------------------------
+    # Return the mixed velocity command given the distance to trap and gains
+    #------------------------------------------------------------------------
+    def smooth_mix(self, tele_control, navi_control, dist_to_trap, ds, epsilon):
+        # Compute gain using epsilon, dist to trap and ds
+        gain = rho(dist_to_trap-ds)/(rho(dist_to_trap-ds)+rho(epsilon +self.ds-dist_to_trap))
         #print 'human-in-the-loop gain is ' + str(self.gain)
-        mix_control = [0.0,0.0,0.0]
-        mix_control[0] = (1-self.gain)*navi_control[0] + self.gain*tele_control[0]
-        mix_control[1] = (1-self.gain)*navi_control[1] + self.gain*tele_control[1]
-        mix_control[2] = navi_control[2]
-        return mix_control
 
-    def saturate(self, command, max_value):
+        # Mix velocity commands by using previously calculated gain
+        mix_vel_cmd = Twist()
+        mix_vel_cmd.linear.x = (1 - gain) * navi_control.linear.x + gain * tele_control.linear.x
+        mix_vel_cmd.linear.y = (1 - gain) * navi_control.linear.y + gain * tele_control.linear.y
+        mix_vel_cmd.linear.z = (1 - gain) * navi_control.linear.z + gain * tele_control.linear.z
+        mix_vel_cmd.angular.x = (1 - gain) * navi_control.angular.x + gain * tele_control.angular.x
+        mix_vel_cmd.angular.y = (1 - gain) * navi_control.angular.y + gain * tele_control.angular.y
+        mix_vel_cmd.angular.z = (1 - gain) * navi_control.angular.z + gain * tele_control.angular.z
+
+        return mix_vel_cmd
+
+    #-----------------------------------------------------------
+    # Bound the minimum and maximum value of a velocity command
+    #-----------------------------------------------------------
+    def bound_vel_cmd(self, vel_twist_msg):
+        vel_twist_msg.linear.x = self.bound(vel_twist_msg.linear.x, max_linear_x_vel)
+        vel_twist_msg.linear.y = self.bound(vel_twist_msg.linear.y, max_linear_y_vel)
+        vel_twist_msg.linear.z = self.bound(vel_twist_msg.linear.z, max_linear_z_vel)
+        vel_twist_msg.angular.x = self.bound(vel_twist_msg.angular.x, max_angular_x_vel)
+        vel_twist_msg.angular.y = self.bound(vel_twist_msg.angular.y, max_angular_y_vel)
+        vel_twist_msg.angular.z = self.bound(vel_twist_msg.angular.z, max_angular_z_vel)
+
+        return vel_twist_msg
+
+    #---------------
+    # Bound a value
+    #---------------
+    def bound(self, command, max_value):
         if command > max_value:
             command = max_value
-        else if command < -max_value:
+        elif command < -max_value:
             command = -max_value
+
         return command
 
     #-------------------------------------
     # Rho function needed for mix formula
     #-------------------------------------
     def rho(s):
-    if (s > 0):
-        return np.exp(-1.0/s)
-    else:
-        return 0
+        if (s > 0):
+            return np.exp(-1.0/s)
+        else:
+            return 0
 
 
 #============================
