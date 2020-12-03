@@ -12,10 +12,15 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
-
+  dynamic_reconfigure
 )
 
+
 catkin_python_setup()
+
+
+
+
 
 ###################################
 ## catkin specific configuration ##
@@ -31,7 +36,7 @@ catkin_package(
 #  LIBRARIES ltl_automaton_core
 #  CATKIN_DEPENDS roscpp
 #  LIBRARIES ltl_core
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  CATKIN_DEPENDS roscpp rospy std_msgs dynamic_reconfigure
 #  DEPENDS system_lib
 )
 

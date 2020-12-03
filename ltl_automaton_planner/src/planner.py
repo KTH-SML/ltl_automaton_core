@@ -20,6 +20,11 @@ from ltl_automaton_utilities import state_models_from_ts, import_ts_from_file
 from ltl_automaton_msgs.msg import TransitionSystemState
 from ltl_automaton_msgs.srv import TrapCheck, TrapCheckResponse
 
+# Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
+from dynamic_reconfigure.client import Client as DRClient
+from dynamic_reconfigure.server import Server as DRServer
+from dynamic_params.cfg import DPConfig
+
 
 def show_automaton(automaton_graph):
     pos=nx.circular_layout(automaton_graph)
@@ -71,6 +76,10 @@ class MainPlanner(object):
             self.initial_ts_dict = init_ts_state_from_agent(rospy.wait_for_message("ts_state", TransitionSystemState))
         else:
             self.initial_ts_dict = None
+
+        # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
+        self.re_plan_hil_param = None
+        self.dynparam_srv = DRServer(DPConfig, self.dynparam_callback)
 
     # 
     def init_ts_state_from_agent(self, msg=TransitionSystemState):
@@ -153,7 +162,13 @@ class MainPlanner(object):
 
         # Initialize subscriber to IRL requests
         self.irl_sub = rospy.Subscriber('irl_request', std_msgs.msg.Bool, self.irl_request_callback, queue_size=1)
+   
 
+    def dynparam_callback(self, config, level):
+        rospy.loginfo("""Reconfigure Request: {re_plan_hil_param}""".format(**config))
+        self.re_plan_hil_param = config['re_plan_hil_param']
+        print('re_plan_hil_param: ' + str(self.re_plan_hil_param))
+        return config
 
     def ltl_state_callback(self, msg=TransitionSystemState()):
         
