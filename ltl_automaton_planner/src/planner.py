@@ -23,7 +23,7 @@ from ltl_automaton_msgs.srv import TrapCheck, TrapCheckResponse
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
 from dynamic_reconfigure.client import Client as DRClient
 from dynamic_reconfigure.server import Server as DRServer
-from dynamic_params.cfg import DPConfig
+from ltl_automaton_msgs.cfg import LTLAutomatonDPConfig
 
 
 def show_automaton(automaton_graph):
@@ -79,7 +79,7 @@ class MainPlanner(object):
 
         # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
         self.re_plan_hil_param = None
-        self.dynparam_srv = DRServer(DPConfig, self.dynparam_callback)
+        self.dynparam_srv = DRServer(LTLAutomatonDPConfig, self.dynparam_callback)
 
     # 
     def init_ts_state_from_agent(self, msg=TransitionSystemState):
@@ -115,23 +115,21 @@ class MainPlanner(object):
     	self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
         #show_automaton(self.robot_model.product)
-        #show_automaton(self.ltl_planner.product)
+        show_automaton(self.ltl_planner.product)
 
     #---------------------------------------------
     # Callback for checking is given TS is a trap
     #---------------------------------------------
     def trap_check_callback(self, trap_check_req):
-        print "received check for trap request"
+        # Extract state from request
+        ts_state = self.handle_ts_state_msg(trap_check_req.ts_state)
 
-        #TODO Add check for message malformed
-
-        # Extract TS state from request message
-        ts_state = tuple(trap_check_req.ts_state.states)
         # Create response message
         res = TrapCheckResponse()
 
         # Check if TS state is trap
         is_trap = self.ltl_planner.is_trap(ts_state)
+        print is_trap
 
         # TS state is trap
         if is_trap == 1:
@@ -159,7 +157,7 @@ class MainPlanner(object):
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
 
         # Initialize check for trap service
-        self.trap_srv = rospy.Service('is_trap', TrapCheck, self.trap_check_callback)
+        self.trap_srv = rospy.Service('check_for_trap', TrapCheck, self.trap_check_callback)
 
         # Initialize subscriber to IRL requests
         self.irl_sub = rospy.Subscriber('irl_request', std_msgs.msg.Bool, self.irl_request_callback, queue_size=1)
@@ -172,15 +170,9 @@ class MainPlanner(object):
         return config
 
     def ltl_state_callback(self, msg=TransitionSystemState()):
-        
-        # Get system state, convert to tuple and set boolean condition to False
-        # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
-        if len(msg.states) > 1:
-            state = tuple(msg.states)
-        else:
-            state = msg.states[0]
+        # Extract TS state from message
+        state = self.handle_ts_state_msg(msg)
 
-        #state = ('unloaded','r2') # FOR DEBUGGING REMOVE
         is_next_state = False
 
         # Check if state is in TS
@@ -265,6 +257,20 @@ class MainPlanner(object):
 			self.ltl_planner.replan_from_ts_state(self.curr_ts_state)
 			self.ltl_planner.find_next_move()
 			self.plan_pub.publish(self.ltl_planner.next_move)
+
+    def handle_ts_state_msg(self, ts_state_msg):
+        # Extract TS state from request message
+        # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
+        if len(ts_state_msg.states) > 1:
+            ts_state = tuple(ts_state_msg.states)
+            return ts_state
+        elif len(ts_state_msg.states) == 1:
+            ts_state = ts_state_msg.states[0]
+            return ts_state
+        else:
+            raise ValueError("received empty TS state")
+
+        #TODO Add check for message malformed (not corresponding fields)
 
 
 #==============================

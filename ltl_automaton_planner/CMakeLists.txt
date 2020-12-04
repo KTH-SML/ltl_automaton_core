@@ -11,16 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  message_generation
-  dynamic_reconfigure
 )
 
-
 catkin_python_setup()
-
-
-
-
 
 ###################################
 ## catkin specific configuration ##
