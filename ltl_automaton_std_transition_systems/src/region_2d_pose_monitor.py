@@ -219,10 +219,10 @@ class Region2DPoseStateMonitor(object):
         # If distance is inferior to radius plus hysteresis,
         # or if angle is inferior to threshold plus hysteresis, agent is in of region
         if (dist < station_radius + dist_hysteresis) and (angle < angle_threshold + angle_hysteresis):
-            print "True"
+            #print "True"
             return True
         else:
-            print "False"
+            #print "False"
             return False
         
     #-------------------------------
