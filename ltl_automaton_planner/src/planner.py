@@ -99,7 +99,8 @@ class MainPlanner(object):
         self.robot_model = TSModel(state_models)
         self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
         self.ltl_planner.optimal()
-        self.curr_ts_state = self.ltl_planner.product.graph['ts'].graph['initial']
+        # Get first value from set
+        self.curr_ts_state = list(self.ltl_planner.product.graph['ts'].graph['initial'])[0]
 
         # initialize storage of set of possible runs in product
     	self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
@@ -158,7 +159,12 @@ class MainPlanner(object):
     def ltl_state_callback(self, msg=TransitionSystemState()):
         
         # Get system state, convert to tuple and set boolean condition to False
-        state = tuple(msg.states)
+        # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
+        if len(msg.states) > 1:
+            state = tuple(msg.states)
+        else:
+            state = msg.states[0]
+
         #state = ('unloaded','r2') # FOR DEBUGGING REMOVE
         is_next_state = False
 
@@ -229,8 +235,9 @@ class MainPlanner(object):
                 # Publish next move
                 print('Planner.py: **Re-planning** and publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
-
-        else:
+        elif state == self.curr_ts_state:
+            rospy.logwarn("Already received state")
+        elif not (state in self.robot_model.product.nodes()):
             #ERROR: unknown state (not part of TS)
             self.plan_pub.publish('None')
             rospy.logwarn('State is not in TS plan!')
