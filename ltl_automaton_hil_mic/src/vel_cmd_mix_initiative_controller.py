@@ -22,6 +22,8 @@ class VelCmdMixer(object):
         # Setup subscribers and publishers
         self.set_pub_sub()
 
+        rospy.loginfo("Human-in-the-loop velocity commands mix-initiative controller initialized")
+
     #--------------------------------------------------
     # Load controller parameters from parameter server
     #--------------------------------------------------
@@ -69,22 +71,22 @@ class VelCmdMixer(object):
     #---------------------------------------------------
     def set_pub_sub(self):
         # Set closest region service client
-        closest_reg_srv = rospy.ServiceProxy("closest_region", ClosestState)
+        self.closest_reg_srv = rospy.ServiceProxy("closest_region", ClosestState)
 
         # Set trap check service client
-        trap_cheq_srv = rospy.ServiceProxy("check_for_trap", TrapCheck)
+        self.trap_cheq_srv = rospy.ServiceProxy("check_for_trap", TrapCheck)
 
         # Set mix initiave controller output
-        mix_vel_cmd_pub = rospy.Publisher("mix_cmd_vel", Twist, queue_size=50)
+        self.mix_vel_cmd_pub = rospy.Publisher("cmd_vel", Twist, queue_size=50)
 
         # Set agent TS state subscriber
-        rospy.Subscriber("ts_state", TransitionSystemState, self.ts_state_callback ,queue_size=50)
+        rospy.Subscriber("ts_state", TransitionSystemState, self.ts_state_callback, queue_size=50)
 
         # Set human input planner
-        rospy.Subscriber("teleop_cmd_vel", Twist, self.teleop_cmd_callback, queue_size=50)
+        rospy.Subscriber("key_vel", Twist, self.teleop_cmd_callback, queue_size=50)
 
         # Set planner input subscriber
-        rospy.Subscriber("planner_cmd_vel", Twist, self.planner_cmd_callback ,queue_size=50)
+        rospy.Subscriber("nav_vel", Twist, self.planner_cmd_callback, queue_size=50)
 
     #-------------------------
     # Agent TS state callback
@@ -114,6 +116,10 @@ class VelCmdMixer(object):
             if (rospy.Time.now() - self.last_received_human_input < self.timeout) and (self.curr_ts_state):
                 # Run controller mix and publish
                 self.mix_vel_cmd_pub.publish(self.control_mixer())
+                return
+        
+        # Else use planner input directly
+        self.mix_vel_cmd_pub.publish(self.planner_input_vel)
 
     #--------------------------------
     # Human velocity command input
@@ -150,8 +156,10 @@ class VelCmdMixer(object):
 
         # If not a trap or cannot check for trap (no closest region or region unconnected)
         return False
-           
-
+    
+    #------------------------------------------------------------
+    # Mix human input and planner input according to agent state
+    #------------------------------------------------------------
     def control_mixer(self, teleop_vel_cmd, planner_vel_cmd):
         #print 'telecontrol signal is' + str(self.tele_control
         tele_magnitude = math.sqrt(teleop_vel_cmd.linear.x**2
