@@ -36,9 +36,8 @@ class ProdAut(DiGraph):
 
         self.build_accept_with_cycle()
 
-        # Build initial reachable set from initial state
-        self.reachable_states = set(self.graph['initial'])
-        #self.reachable_states = self.update_reachable(self.graph['ts'].graph['initial'])
+        # Build initial possible state set from initial state
+        self.possible_states = set(self.graph['initial'])
 
     # Build required for IRL (TODO: check exactly how this works)
     def build_full_margin(self, opt_path):
@@ -115,7 +114,7 @@ class ProdAut(DiGraph):
                 self.graph['initial'].add(init_prod_node)
 
         # Build initial reachable set from initial state
-        self.reachable_states = set(self.graph['initial'])
+        self.possible_states = set(self.graph['initial'])
 
     #-----------------------------
     # Build accept product states
@@ -182,13 +181,13 @@ class ProdAut(DiGraph):
             self.node[f_prod_node]['marker'] = 'visited'
 
     #------------------------------------
-    # Get reachable states from previous
-    # reachable set and a given TS state 
+    # Get possible states from previous
+    # possible set and a given TS state 
     #------------------------------------
-    def get_reachable(self, ts_node):
+    def get_possible_states(self, ts_node):
         new_reachable = set()
-        # Go through each product state in reachable states
-        for f_s in self.reachable_states:
+        # Go through each product state in possible states
+        for f_s in self.possible_states:
             # Go through all connected states and if TS states match, add it to the list
             for t_s in self.successors(f_s):
                 if t_s[0] == ts_node:
@@ -264,59 +263,3 @@ class ProdAut_Run(object):
 
         print('pre_plan: ' + str(self.pre_plan))
         print('suf_plan: ' + str(self.suf_plan))
-
-
-    ##OLD plan_output##
-    # def plan_output(self, product):
-
-    #     # Collect the nodes of the TS associated with the prefix plan
-    #     self.line = [product.node[node]['ts'] for node in self.prefix]
-    #     # Collect the nodes of the TS associated with the suffix plan
-    #     self.loop = [product.node[node]['ts'] for node in self.suffix]
-
-    #     # Collect prefix nodes in list of tuples e.g. [ (prefix_node_1, prefix_node_2), (prefix_node_2, prefix_node_3), ..., (prefix_node_n-1, prefix_node_n)]
-    #     self.pre_ts_edges = zip(self.line[0:-1], self.line[1:])
-    #     # Collect suffix nodes in list of tuples (see pre_ts_edges)
-    #     self.suf_ts_edges = zip(self.loop[0:-1], self.loop[1:])
-
-    #     # output plan --- for execution
-
-    #     # Initialize prefix plan: Extract first state of the state_model associated with the prefix plan
-    #     self.pre_plan = [self.line[0][0],]
-    #     # Initialize pre_plan cost
-    #     self.pre_plan_cost = [0,]
-
-    #     # Iterate over the nodes associated with the prefix (see pre_ts_edges)
-    #     for ts_edge in self.pre_ts_edges:
-    #         # Check the action for the consecutive set of nodes in the prefix. If the action is 'goto', add the next motion state (ie region) as the plan's action
-    #         if product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] == 'goto':
-    #             self.pre_plan.append(ts_edge[1][0]) # motion NOTE: here the motion is associated with the TS model and stored in order of Motion then Action 
-    #         else:
-    #             # if the action is NOT 'goto', then we add the 'action' to the pre plan
-    #             self.pre_plan.append(ts_edge[1][1]) # action
-
-    #         # add the weight of the weight from the TS between the two consectuve nodes as the cost of the plan
-    #         self.pre_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # cost 
-
-    #     # Initialize suffix plan and cost
-    #     self.suf_plan = list()
-    #     self.suf_plan_cost = [0,]
-
-    #     # Iterate over the nodes associated with the suffix (see suf_ts_edges)
-    #     for ts_edge in self.suf_ts_edges:
-    #         if product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] == 'goto':
-    #             self.suf_plan.append(ts_edge[1][0]) # motion 
-    #         else:
-    #             self.suf_plan.append(ts_edge[1][1]) # action
-    #         self.suf_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # cost
-
-        
-
-
-
-
-
-
-
-
-
