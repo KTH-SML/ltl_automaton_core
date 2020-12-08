@@ -6,7 +6,7 @@ from copy import deepcopy
 from geometry_msgs.msg import Twist
 
 #Import LTL automaton message definitions
-from ltl_automaton_msgs.msg import TransitionSystemState
+from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState
 from ltl_automaton_msgs.srv import ClosestState, ClosestStateRequest, TrapCheck, TrapCheckRequest
 
 #==============================================
@@ -83,7 +83,7 @@ class VelCmdMixer(object):
         self.mix_vel_cmd_pub = rospy.Publisher("cmd_vel", Twist, queue_size=50)
 
         # Set agent TS state subscriber
-        rospy.Subscriber("ts_state", TransitionSystemState, self.ts_state_callback, queue_size=50)
+        rospy.Subscriber("ts_state", TransitionSystemStateStamped, self.ts_state_callback, queue_size=50)
 
         # Set human input planner
         rospy.Subscriber("key_vel", Twist, self.teleop_cmd_callback, queue_size=50)
@@ -96,17 +96,17 @@ class VelCmdMixer(object):
     #-------------------------
     def ts_state_callback(self, msg):
         # If not using same state model type, print warning and ignore message
-        if not self.state_dimension_name in msg.state_dimension_names:
+        if not self.state_dimension_name in msg.ts_state.state_dimension_names:
             rospy.logwarn("Received TS state does not include state model type used by velocity command HIL MIC (%s), TS state is of type %s"
-                          % (self.state_dimension_name, msg.state_dimension_names))
+                          % (self.state_dimension_name, msg.ts_state.state_dimension_names))
         # If lenght of states is different from length of state dimension names, message is malformed
         # print warning and ignore message
-        if not (len(msg.state_dimension_names) == len(msg.states)):
+        if not (len(msg.ts_state.state_dimension_names) == len(msg.ts_state.states)):
             rospy.logwarn("Received TS state but number of states: %i doesn't correpond to number of state dimensions: %i"
-                          % (len(msg.states),len(msg.state_dimension_names)))
+                          % (len(msg.ts_state.states),len(msg.ts_state.state_dimension_names)))
         # Else message is valid, save it
         else:
-            self.curr_ts_state = msg
+            self.curr_ts_state = msg.ts_state
 
     #--------------------------------
     # Planner velocity command input

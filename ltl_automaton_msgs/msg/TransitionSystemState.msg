@@ -3,8 +3,6 @@
 # Number of dimensions within each TS states can vary depending of the
 # defined TS.
 
-Header header
-
 # TS (Transition System) state. A TS state is composed of an
 # array of states from at least 1 transition model or from the
 # product of more transition models.

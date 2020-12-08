@@ -17,7 +17,7 @@ import networkx as nx
 from ltl_automaton_utilities import state_models_from_ts, import_ts_from_file
 
 #Import LTL automaton message definitions
-from ltl_automaton_msgs.msg import TransitionSystemState, LTLPlan, LTLState, LTLStateArray
+from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray
 from ltl_automaton_msgs.srv import TrapCheck, TrapCheckResponse
 
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
@@ -164,7 +164,7 @@ class MainPlanner(object):
         self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
-        self.state_sub = rospy.Subscriber('ts_state', TransitionSystemState, self.ltl_state_callback, queue_size=1) 
+        self.state_sub = rospy.Subscriber('ts_state', TransitionSystemStateStamped, self.ltl_state_callback, queue_size=1) 
 
         # Initialize publisher to send plan commands
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
@@ -182,9 +182,9 @@ class MainPlanner(object):
         print('re_plan_hil_param: ' + str(self.re_plan_hil_param))
         return config
 
-    def ltl_state_callback(self, msg=TransitionSystemState()):
+    def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
         # Extract TS state from message
-        state = self.handle_ts_state_msg(msg)
+        state = self.handle_ts_state_msg(msg.ts_state)
 
         is_next_state = False
 
