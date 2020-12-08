@@ -17,7 +17,7 @@ import networkx as nx
 from ltl_automaton_utilities import state_models_from_ts, import_ts_from_file
 
 #Import LTL automaton message definitions
-from ltl_automaton_msgs.msg import TransitionSystemState
+from ltl_automaton_msgs.msg import TransitionSystemState, LTLPlan
 from ltl_automaton_msgs.srv import TrapCheck, TrapCheckResponse
 
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
@@ -37,14 +37,15 @@ def show_automaton(automaton_graph):
 
 class MainPlanner(object):
     def __init__(self):
-    	# init parameters, automaton, etc...
+        # init parameters, automaton, etc...
         self.init_params();
 
         self.build_automaton();
 
         self.setup_pub_sub();
 
-        # Output first command of plan
+        # Output plan and first command of plan
+        self.publish_plan()
         self.plan_pub.publish(self.ltl_planner.next_move)
        
 
@@ -108,14 +109,15 @@ class MainPlanner(object):
         self.robot_model = TSModel(state_models)
         self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
         self.ltl_planner.optimal()
+
         # Get first value from set
         self.curr_ts_state = list(self.ltl_planner.product.graph['ts'].graph['initial'])[0]
 
         # initialize storage of set of possible runs in product
-    	self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
+        self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
         #show_automaton(self.robot_model.product)
-        show_automaton(self.ltl_planner.product)
+        #show_automaton(self.ltl_planner.product)
 
     #---------------------------------------------
     # Callback for checking is given TS is a trap
@@ -149,9 +151,14 @@ class MainPlanner(object):
 
 
     def setup_pub_sub(self):
+        # Prefix plan publisher
+        self.prefix_plan_pub = rospy.Publisher('prefix_plan', LTLPlan, latch=True, queue_size = 1)
+
+        # Suffix plan publisher
+        self.suffix_plan_pub = rospy.Publisher('suffix_plan', LTLPlan, latch=True, queue_size = 1)
 
         # Initialize subscriber to provide current state of robot
-        self.state_sub = rospy.Subscriber('ts_state', TransitionSystemState , self.ltl_state_callback, queue_size=1) 
+        self.state_sub = rospy.Subscriber('ts_state', TransitionSystemState, self.ltl_state_callback, queue_size=1) 
 
         # Initialize publisher to send plan commands
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
@@ -191,6 +198,7 @@ class MainPlanner(object):
 
                 # Replan
                 self.ltl_planner.replan_from_ts_state(state)
+                self.publish_plan()
                 
                 # Publish next move
                 rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
@@ -206,7 +214,7 @@ class MainPlanner(object):
             #------------------------------------------------------------------
             self.posb_runs = self.ltl_planner.update_posb_runs(self.posb_runs, state)
             if not self.posb_runs:
-            	print "WARNING: Empty set of possible runs"
+                print "WARNING: Empty set of possible runs"
 
 
             #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
@@ -238,25 +246,29 @@ class MainPlanner(object):
 
                 # Replan
                 self.ltl_planner.replan_from_ts_state(state)
+                self.publish_plan()
 
                 # Publish next move
                 print('Planner.py: **Re-planning** and publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
+
         elif state == self.curr_ts_state:
             rospy.logwarn("Already received state")
+
         elif not (state in self.robot_model.product.nodes()):
             #ERROR: unknown state (not part of TS)
             self.plan_pub.publish('None')
             rospy.logwarn('State is not in TS plan!')
 
     def irl_request_callback(self, msg=False):
-    	if msg:
-			print('Planner.py **Relearning** and publishing next move')
-			self.ltl_planner.irl_jit(self.posb_runs)
-			# Replan
-			self.ltl_planner.replan_from_ts_state(self.curr_ts_state)
-			self.ltl_planner.find_next_move()
-			self.plan_pub.publish(self.ltl_planner.next_move)
+        if msg:
+            print('Planner.py **Relearning** and publishing next move')
+            self.ltl_planner.irl_jit(self.posb_runs)
+            # Replan
+            self.ltl_planner.replan_from_ts_state(self.curr_ts_state)
+            self.publish_plan()
+            self.ltl_planner.find_next_move()
+            self.plan_pub.publish(self.ltl_planner.next_move)
 
     def handle_ts_state_msg(self, ts_state_msg):
         # Extract TS state from request message
@@ -272,11 +284,31 @@ class MainPlanner(object):
 
         #TODO Add check for message malformed (not corresponding fields)
 
+    #----------------------------------------------
+    # Publish prefix and suffix plans from planner
+    #----------------------------------------------
+    def publish_plan(self):
+        # If plan exists
+        if not (self.ltl_planner.run == None):
+            # Prefix plan
+            prefix_plan_msg = LTLPlan()
+            prefix_plan_msg.header.stamp = rospy.Time.now()
+            prefix_plan_msg.action_sequence = self.ltl_planner.run.pre_plan
+            prefix_plan_msg.state_sequence = [n for n in self.ltl_planner.run.line]
+            self.prefix_plan_pub.publish(prefix_plan_msg)    # publish
+
+            # Suffix plan
+            suffix_plan_msg = LTLPlan()
+            suffix_plan_msg.header.stamp = rospy.Time.now()
+            suffix_plan_msg.action_sequence = self.ltl_planner.run.suf_plan
+            suffix_plan_msg.state_sequence = [n for n in self.ltl_planner.run.loop]
+            self.suffix_plan_pub.publish(suffix_plan_msg)    # publish
+
 
 #==============================
 #             Main
 #==============================
 if __name__ == '__main__':
-    rospy.init_node('ltl_planner',anonymous=False)
+    rospy.init_node('ltl_planner', anonymous=False)
     ltl_planner_node = MainPlanner()
     rospy.spin()
