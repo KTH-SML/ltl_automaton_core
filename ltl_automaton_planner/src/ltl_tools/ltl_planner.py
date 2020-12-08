@@ -67,23 +67,23 @@ class LTLPlanner(object):
         return plantime
 
     #-----------------------------
-    #  Update current reachable   
+    #   Update current possible   
     # states using given TS state 
     #-----------------------------
-    def update_reachable(self, ts_node):
-        # Get reachable states
-        self.product.reachable_states = self.product.get_reachable(ts_node)
+    def update_possible_states(self, ts_node):
+        # Get possible states
+        self.product.possible_states = self.product.get_possible_states(ts_node)
 
         if self.start_suffix():
             print '=============================='
             print '--- New suffix execution---'
             print '=============================='               
-            self.product.reachable_states = self.intersect_accept(self.product.reachable_states, ts_node)
+            self.product.possible_states = self.intersect_accept(self.product.possible_states, ts_node)
 
-        # If reachable set in not empty, return true
-        if self.product.reachable_states:
+        # If possible states set in not empty, return true
+        if self.product.possible_states:
             return True
-        # If no states in reachable set, return false
+        # If no states in possible states set, return false
         else:
             return False
 
@@ -105,16 +105,16 @@ class LTLPlanner(object):
     #---------------------------------
     # if reached, no possible path to accept
     def is_trap(self, ts_state):
-        # Get reachable if current reachable were to be updated from a given TS state
-        reachable_if_reached = self.product.get_reachable(ts_state)
-        print "===== reachable if trap reached ====="
-        print reachable_if_reached
+        # Get possible states if current states were to be updated from a given TS state
+        reachable_states = self.product.get_possible_states(ts_state)
+        print "===== possible states if trap reached ====="
+        print reachable_states
         print "====================================="
 
         # If reachable states exist
-        if reachable_if_reached:
+        if reachable_states:
             # If TS state is trap
-            if self.check_reachable_for_trap(reachable_if_reached):
+            if self.check_possible_states_for_trap(reachable_states):
                 return 1
             # If TS state is not a trap
             else:
@@ -123,13 +123,13 @@ class LTLPlanner(object):
         else:
             return 0
 
-    #---------------------------------------------------------
-    # Check in a reachable set has a path to accepting states
-    #---------------------------------------------------------
-    # Returns True if reachable set is from a trap state
-    # (meaning there are no path to accepting from trap state reachable set)
-    def check_reachable_for_trap(self, reachable_set):
-        for s in reachable_set:
+    #--------------------------------------------------------------
+    # Check if a possible state set has a path to accepting states
+    #--------------------------------------------------------------
+    # Returns True if possible state set is from a trap state
+    # (meaning there are no path to accepting from trap possible state set)
+    def check_possible_states_for_trap(self, possible_state_set):
+        for s in possible_state_set:
             print "---- checking state for path to accept with cycle ----"
             print s
             print "-----"
@@ -143,7 +143,7 @@ class LTLPlanner(object):
                 
         return True
 
-    def intersect_accept(self, reachable_set, reach_ts):
+    def intersect_accept(self, possible_states, reach_ts):
         accept_set = self.product.graph['accept']
         inter_set = set([s for s in accept_set if s[0] == reach_ts])
         return inter_set

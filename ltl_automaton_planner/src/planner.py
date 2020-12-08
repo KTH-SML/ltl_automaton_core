@@ -190,11 +190,11 @@ class MainPlanner(object):
             # Update current state
             self.curr_ts_state = state
 
-            #------------------------------------------------------------------
-            # Try update reachable and if error (forbidden transition), replan
-            #------------------------------------------------------------------
-            if not self.ltl_planner.update_reachable(state):
-                rospy.logerr('Can not update reachable - forbidden transition, replanning...')
+            #-----------------------------------------------------------------------
+            # Try update possible state and if error (forbidden transition), replan
+            #-----------------------------------------------------------------------
+            if not self.ltl_planner.update_possible_states(state):
+                rospy.logerr('Can not update possible states - forbidden transition, replanning...')
 
                 # Replan
                 self.ltl_planner.replan_from_ts_state(state)
@@ -205,8 +205,8 @@ class MainPlanner(object):
                 self.plan_pub.publish(self.ltl_planner.next_move)
 
                 return
-            print "========= NEW REACHABLE =========="
-            print self.ltl_planner.product.reachable_states
+            print "========= NEW POSSIBLE STATES =========="
+            print self.ltl_planner.product.possible_states
             print "=================================="
 
             #------------------------------------------------------------------

@@ -36,9 +36,8 @@ class ProdAut(DiGraph):
 
         self.build_accept_with_cycle()
 
-        # Build initial reachable set from initial state
-        self.reachable_states = set(self.graph['initial'])
-        #self.reachable_states = self.update_reachable(self.graph['ts'].graph['initial'])
+        # Build initial possible state set from initial state
+        self.possible_states = set(self.graph['initial'])
 
     # Build required for IRL (TODO: check exactly how this works)
     def build_full_margin(self, opt_path):
@@ -115,7 +114,7 @@ class ProdAut(DiGraph):
                 self.graph['initial'].add(init_prod_node)
 
         # Build initial reachable set from initial state
-        self.reachable_states = set(self.graph['initial'])
+        self.possible_states = set(self.graph['initial'])
 
     #-----------------------------
     # Build accept product states
@@ -182,13 +181,13 @@ class ProdAut(DiGraph):
             self.node[f_prod_node]['marker'] = 'visited'
 
     #------------------------------------
-    # Get reachable states from previous
-    # reachable set and a given TS state 
+    # Get possible states from previous
+    # possible set and a given TS state 
     #------------------------------------
-    def get_reachable(self, ts_node):
+    def get_possible_states(self, ts_node):
         new_reachable = set()
-        # Go through each product state in reachable states
-        for f_s in self.reachable_states:
+        # Go through each product state in possible states
+        for f_s in self.possible_states:
             # Go through all connected states and if TS states match, add it to the list
             for t_s in self.successors(f_s):
                 if t_s[0] == ts_node:
