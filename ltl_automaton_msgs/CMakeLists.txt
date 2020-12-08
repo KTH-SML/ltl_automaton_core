@@ -37,6 +37,8 @@ generate_dynamic_reconfigure_options(
    FILES
    TransitionSystemState.msg
    LTLPlan.msg
+   LTLState.msg
+   LTLStateArray.msg
  )
 
 ## Generate services in the 'srv' folder

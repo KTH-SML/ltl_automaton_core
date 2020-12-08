@@ -17,7 +17,7 @@ import networkx as nx
 from ltl_automaton_utilities import state_models_from_ts, import_ts_from_file
 
 #Import LTL automaton message definitions
-from ltl_automaton_msgs.msg import TransitionSystemState, LTLPlan
+from ltl_automaton_msgs.msg import TransitionSystemState, LTLPlan, LTLState, LTLStateArray
 from ltl_automaton_msgs.srv import TrapCheck, TrapCheckResponse
 
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
@@ -45,6 +45,7 @@ class MainPlanner(object):
         self.setup_pub_sub();
 
         # Output plan and first command of plan
+        self.publish_possible_states()
         self.publish_plan()
         self.plan_pub.publish(self.ltl_planner.next_move)
        
@@ -157,6 +158,9 @@ class MainPlanner(object):
         # Suffix plan publisher
         self.suffix_plan_pub = rospy.Publisher('suffix_plan', LTLPlan, latch=True, queue_size = 1)
 
+        # Possible states publisher
+        self.possible_states_pub = rospy.Publisher('possible_states', LTLStateArray, latch=True, queue_size=1)
+
         # Initialize subscriber to provide current state of robot
         self.state_sub = rospy.Subscriber('ts_state', TransitionSystemState, self.ltl_state_callback, queue_size=1) 
 
@@ -199,6 +203,9 @@ class MainPlanner(object):
                 # Replan
                 self.ltl_planner.replan_from_ts_state(state)
                 self.publish_plan()
+
+                # Publish new possible states
+                self
                 
                 # Publish next move
                 rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
@@ -208,6 +215,8 @@ class MainPlanner(object):
             print "========= NEW POSSIBLE STATES =========="
             print self.ltl_planner.product.possible_states
             print "=================================="
+            # Publish possible states
+            self.publish_possible_states()
 
             #------------------------------------------------------------------
             # Try update set of possible runs and if error, display warning
@@ -303,6 +312,22 @@ class MainPlanner(object):
             suffix_plan_msg.action_sequence = self.ltl_planner.run.suf_plan
             suffix_plan_msg.state_sequence = [n for n in self.ltl_planner.run.loop]
             self.suffix_plan_pub.publish(suffix_plan_msg)    # publish
+
+    #-------------------------
+    # Publish possible states
+    #-------------------------
+    def publish_possible_states(self):
+        # Create message
+        possible_states_msg = LTLStateArray()
+        # For all possible state, add to the message list
+        for ltl_state in self.ltl_planner.product.possible_states:
+            ltl_state_msg = LTLState()
+            ltl_state_msg.ts_state.states.append(ltl_state[0])
+            ltl_state_msg.buchi_state = ltl_state[1]
+            possible_states_msg.ltl_states.append(ltl_state_msg)
+
+        # Publish
+        self.possible_states_pub.publish(possible_states_msg)
 
 
 #==============================
