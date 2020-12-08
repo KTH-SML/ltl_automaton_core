@@ -75,9 +75,9 @@ class MainPlanner(object):
 
         #If initial TS states is from agent, wait from agent state callback
         if self.initial_ts_state_from_agent:
-            self.initial_ts_dict = init_ts_state_from_agent(rospy.wait_for_message("ts_state", TransitionSystemState))
+            self.initial_state_ts_dict = init_ts_state_from_agent(rospy.wait_for_message("ts_state", TransitionSystemState))
         else:
-            self.initial_ts_dict = None
+            self.initial_state_ts_dict = None
 
         # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
         self.re_plan_hil_param = None
@@ -85,26 +85,28 @@ class MainPlanner(object):
 
     # 
     def init_ts_state_from_agent(self, msg=TransitionSystemState):
-        initial_ts_dict_ = None
+        initial_state_ts_dict_ = None
 
         # If message is conform (same number of state as number of state dimensions)
         if (len(msg.states) == len(msg.state_dimension_names)):
             # Create dictionnary with paired dimension_name/state_value
-            initial_ts_dict_ = dict()
+            initial_state_ts_dict_ = dict()
             for i in range(msg.states):
-                initial_ts_dict_.append({msg.state_dimension_names[i] : msg.states[i]}) 
+                initial_state_ts_dict_.append({msg.state_dimension_names[i] : msg.states[i]}) 
 
         # Else message is malformed, raise error
         else:
             raise TSError("initial states don't match TS state models: "+len(msg.states)+" initial states and "+len(msg.state_dimension_names)+" state models")
         
         # Return initial state dictionnary
-        return initial_ts_dict_
+        return initial_state_ts_dict_
 
 
     def build_automaton(self):
         # Import TS from config file
-        state_models = state_models_from_ts(import_ts_from_file(rospy.get_param('transition_system_textfile')), self.initial_ts_dict)
+        ts_dict = import_ts_from_file(rospy.get_param('transition_system_textfile'))
+        state_models = state_models_from_ts(ts_dict, self.initial_state_ts_dict)
+        self.ts_state_format = ts_dict['state_dim']
      
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model = TSModel(state_models)
@@ -159,7 +161,7 @@ class MainPlanner(object):
         self.suffix_plan_pub = rospy.Publisher('suffix_plan', LTLPlan, latch=True, queue_size = 1)
 
         # Possible states publisher
-        self.possible_states_pub = rospy.Publisher('possible_states', LTLStateArray, latch=True, queue_size=1)
+        self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
         self.state_sub = rospy.Subscriber('ts_state', TransitionSystemState, self.ltl_state_callback, queue_size=1) 
@@ -300,18 +302,47 @@ class MainPlanner(object):
         # If plan exists
         if not (self.ltl_planner.run == None):
             # Prefix plan
+            #-------------
             prefix_plan_msg = LTLPlan()
             prefix_plan_msg.header.stamp = rospy.Time.now()
             prefix_plan_msg.action_sequence = self.ltl_planner.run.pre_plan
-            prefix_plan_msg.state_sequence = [n for n in self.ltl_planner.run.line]
-            self.prefix_plan_pub.publish(prefix_plan_msg)    # publish
+            # Go through all TS state in plan and add it as TransitionSystemState message
+            for ts_state in self.ltl_planner.run.line:
+                ts_state_msg = TransitionSystemState()
+                ts_state_msg.state_dimension_names = self.ts_state_format
+                # If TS state is more than 1 dimension (is a tuple)
+                if type(ts_state) is tuple:
+                    ts_state_msg.states = list(ts_state)
+                # Else state is a single string
+                else:
+                    ts_state_msg.states = [ts_state]
+                # Add to plan TS state sequence
+                prefix_plan_msg.ts_state_sequence.append(ts_state_msg)
+
+            # Publish
+            self.prefix_plan_pub.publish(prefix_plan_msg)
 
             # Suffix plan
+            #-------------
             suffix_plan_msg = LTLPlan()
             suffix_plan_msg.header.stamp = rospy.Time.now()
             suffix_plan_msg.action_sequence = self.ltl_planner.run.suf_plan
-            suffix_plan_msg.state_sequence = [n for n in self.ltl_planner.run.loop]
-            self.suffix_plan_pub.publish(suffix_plan_msg)    # publish
+            # Go through all TS state in plan and add it as TransitionSystemState message
+            for ts_state in self.ltl_planner.run.loop:
+                ts_state_msg = TransitionSystemState()
+                ts_state_msg.state_dimension_names = self.ts_state_format
+                # If TS state is more than 1 dimension (is a tuple)
+                if type(ts_state) is tuple:
+                    ts_state_msg.states = list(ts_state)
+                # Else state is a single string
+                else:
+                    ts_state_msg.states = [ts_state]
+
+                # Add to plan TS state sequence
+                suffix_plan_msg.ts_state_sequence.append(ts_state_msg)
+
+            # Publish
+            self.suffix_plan_pub.publish(suffix_plan_msg)
 
     #-------------------------
     # Publish possible states
@@ -322,7 +353,14 @@ class MainPlanner(object):
         # For all possible state, add to the message list
         for ltl_state in self.ltl_planner.product.possible_states:
             ltl_state_msg = LTLState()
-            ltl_state_msg.ts_state.states.append(ltl_state[0])
+            # If TS state is more than 1 dimension (is a tuple)
+            if type(ltl_state[0]) is tuple:
+                ltl_state_msg.ts_state.states = list(ltl_state[0])
+            # Else state is a single string
+            else:
+                ltl_state_msg.ts_state.states = [ltl_state[0]]
+
+            ltl_state_msg.ts_state.state_dimension_names = self.ts_state_format
             ltl_state_msg.buchi_state = ltl_state[1]
             possible_states_msg.ltl_states.append(ltl_state_msg)
 

@@ -6,4 +6,4 @@ Header header
 # Sequence of actions in the plan
 string[] action_sequence
 # Sequence of states in the plan
-string[] state_sequence
+TransitionSystemState[] ts_state_sequence
