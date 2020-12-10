@@ -4,7 +4,7 @@ import numpy
 import Queue
 import rospy
 import sys
-#from init import *
+import importlib
 import yaml
 
 import std_msgs
@@ -56,19 +56,24 @@ class MainPlanner(object):
         self.initial_beta = rospy.get_param('initial_beta', 1000)
         self.gamma = rospy.get_param('gamma', 10)
 
-        # Get TS from param
-        transition_system_textfile = rospy.get_param('transition_system_textfile')
-        self.transition_system = yaml.load(transition_system_textfile)
-        print self.transition_system
 
+        # LTL task
+        #----------
         # Get LTL hard task and raise error if don't exist
         if (rospy.has_param('hard_task')):
             self.hard_task = rospy.get_param('hard_task')
         else:
             raise InitError("Cannot initialize LTL planner, no hard_task defined")
-
         # Get LTL soft task
         self.soft_task = rospy.get_param('soft_task', "")
+
+
+        # Transition system
+        #-------------------
+        # Get TS from param
+        transition_system_textfile = rospy.get_param('transition_system_textfile')
+        self.transition_system = yaml.load(transition_system_textfile)
+        print self.transition_system
 
         # Parameter if initial TS is set from agent callback or from TS config file
         self.initial_ts_state_from_agent = rospy.get_param('initial_ts_state_from_agent', False)
@@ -79,9 +84,43 @@ class MainPlanner(object):
         else:
             self.initial_state_ts_dict = None
 
+
         # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
         self.re_plan_hil_param = None
         self.dynparam_srv = DRServer(LTLAutomatonDPConfig, self.dynparam_callback)
+
+
+        # Plugins
+        #---------
+        # Get plugin dictionnary from parameters
+        # Format for plugin param is:
+        #   plugin/<plugin-name>:
+        #       path: <package-path>
+        #       args: <additional-argument-dictionary>
+        plugin_dict = rospy.get_param('~plugin', {})
+        # If plugins are specified, try to load them
+        if plugin_dict:
+            self.plugins = {}
+            for plugin in plugin_dict:
+                # Import plugin module
+                try:
+                    # Import module to a plugin dict
+                    plugin_module = importlib.import_module(self.plugins[plugin]["path"])
+                except ImportError:
+                    # Error log message
+                    rospy.logerr("LTL planner: Import error on loading plugin %s" % str(plugin))
+                    # Go to next plugin
+                    break
+
+                # Get plugin class from imported module
+                plugin_class = getattr(plugin_module, str(plugin))
+                # Create plugin object from class using argument dictionary from parameters
+                self.plugins.update({plugin: plugin_class(self.plugins[plugin]['args'])})
+
+        # Init plugins
+        for plugin in self.plugins:
+            self.plugins[plugin].init()
+
 
     # 
     def init_ts_state_from_agent(self, msg=TransitionSystemState):
@@ -205,9 +244,6 @@ class MainPlanner(object):
                 # Replan
                 self.ltl_planner.replan_from_ts_state(state)
                 self.publish_plan()
-
-                # Publish new possible states
-                self
                 
                 # Publish next move
                 rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
@@ -226,7 +262,9 @@ class MainPlanner(object):
             self.posb_runs = self.ltl_planner.update_posb_runs(self.posb_runs, state)
             if not self.posb_runs:
                 print "WARNING: Empty set of possible runs"
-
+            # print "========= POSSIBLE RUNS =========="
+            # print self.posb_runs
+            # print "=================================="
 
             #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
 
