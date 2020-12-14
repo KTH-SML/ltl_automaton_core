@@ -41,6 +41,7 @@ class ProdAut(DiGraph):
 
     # Build required for IRL (TODO: check exactly how this works)
     def build_full_margin(self, opt_path):
+        opt_edges = None
         if len(opt_path) >= 2:
             opt_edges = zip(opt_path[0::2], opt_path[1::2])
         for f_ts_node in self.graph['ts'].nodes():
@@ -56,8 +57,11 @@ class ProdAut(DiGraph):
                             truth, dist = check_label_for_buchi_edge(self.graph['buchi'], label, f_buchi_node, t_buchi_node)
                             total_weight = cost + self.graph['beta']*dist + 1
 
-                            if (f_prod_node, t_prod_node) in opt_edges:
-                                k = 1
+                            if not opt_edges == None:
+                                if (f_prod_node, t_prod_node) in opt_edges:
+                                    k = 1
+                                else:
+                                    k = 0
                             else:
                                 k = 0
                             total_weight -= k

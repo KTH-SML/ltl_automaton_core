@@ -271,14 +271,3 @@ def dijkstra_revise_once(product, run_segment, broken_edge_index):
     for (bridge, cost) in dijkstra_targets(product, run_segment[broken_edge_index-1], set([run_segment[-1]])):
         new_run_segment = run_segment[0:(broken_edge_index-1)] + bridge
         return new_run_segment
-
-def compute_path_ac_d(product, path):
-    ac_d = 0
-    for i in range(len(path)-1):
-        ac_d += product[path[i]][path[i+1]]['soft_task_dist']
-    return ac_d
-
-# Out of the set of all possible product automaton runs, return the one where soft constraint is least violated
-def select_least_violating_run(product, posb_runs):
-    least_violating_run = min(posb_runs, key=lambda p: compute_path_ac_d(product, p))
-    return least_violating_run

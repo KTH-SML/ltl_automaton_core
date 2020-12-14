@@ -192,12 +192,8 @@ class MainPlanner(object):
         # Initialize publisher to send plan commands
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
 
-        # Initialize subscriber to IRL requests
-        self.irl_sub = rospy.Subscriber('irl_request', std_msgs.msg.Bool, self.irl_request_callback, queue_size=1)
-
 
     def setup_plugins(self):
-
         # Get plugin dictionnary from parameters
         plugin_dict = rospy.get_param('~plugin', {})
         # If plugins are specified, try to load them
@@ -208,13 +204,12 @@ class MainPlanner(object):
             self.plugins[plugin].set_sub_and_pub()
 
 
-   
-
     def dynparam_callback(self, config, level):
         rospy.loginfo("""Reconfigure Request: {replan_on_unplanned_move}""".format(**config))
         self.replan_on_unplanned_move = config['replan_on_unplanned_move']
         print('replan_on_unplanned_move: ' + str(self.replan_on_unplanned_move))
         return config
+        
 
     def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
         # Extract TS state from message
@@ -299,17 +294,6 @@ class MainPlanner(object):
                 if ts_state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
                     return False
             return True
-
-
-    def irl_request_callback(self, msg=False):
-        if msg:
-            print('Planner.py **Relearning** and publishing next move')
-            self.ltl_planner.irl_jit(self.ltl_planner.posb_runs)
-            # Replan
-            self.ltl_planner.replan_from_ts_state(self.ltl_planner.curr_ts_state)
-            self.publish_plan()
-            self.ltl_planner.find_next_move()
-            self.plan_pub.publish(self.ltl_planner.next_move)
 
     #----------------------------------------------
     # Publish prefix and suffix plans from planner
