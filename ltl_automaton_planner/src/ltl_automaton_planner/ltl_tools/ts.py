@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from boolean_formulas.parser import parse as parse_guard
+from ltl_automaton_planner.boolean_formulas.parser import parse as parse_guard
 
 from math import sqrt
 from networkx.classes.digraph import DiGraph

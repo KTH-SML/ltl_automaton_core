@@ -137,7 +137,7 @@ class ProdAut(DiGraph):
         for accept_state in self.graph['accept']:
             try:
                 # print 'Accepting state in consider is', accept_state
-                find_cycle(self,accept_state,orientation="original")
+                find_cycle(self, accept_state, orientation="original")
             except NetworkXNoCycle:
                 # print accept_state, 'fails to find a cycle'
                 pass

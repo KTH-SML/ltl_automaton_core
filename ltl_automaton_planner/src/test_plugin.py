@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 import rospy
 import importlib
+from geometry_msgs.msg import Pose
 #from ltl_automaton_hil_mic.trap_detection import TrapDetectionPlugin
 
 if __name__ == '__main__':
     rospy.init_node('test_node')
+    test = Pose()
 
     plugin_dict = {'TrapDetectionPlugin': {'path': 'ltl_automaton_hil_mic.trap_detection','args': {}}}
     # If plugins are specified, try to load them
@@ -24,8 +26,15 @@ if __name__ == '__main__':
             # Get plugin class from imported module
             plugin_class = getattr(plugin_module, str(plugin))
             # Create plugin object from class using argument dictionary from parameters
-            plugins.update({plugin: plugin_class(plugin_dict[plugin]['args'])})
+            plugins.update({plugin: plugin_class(test, plugin_dict[plugin]['args'])})
 
     # Init plugins
     for plugin in plugins:
         plugins[plugin].init()
+
+    test.position.x = 28.0
+    test.orientation.w = 1.0
+
+    # Init plugins
+    for plugin in plugins:
+        plugins[plugin].run()
