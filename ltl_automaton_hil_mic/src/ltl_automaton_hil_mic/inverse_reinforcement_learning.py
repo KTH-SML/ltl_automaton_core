@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import Bool
+from ltl_automaton_msgs.msg import LTLStateRuns, LTLStateArray, LTLState
 from ltl_automaton_planner.ltl_tools.discrete_plan import dijkstra_plan_networkX
 
 #===================================================
@@ -44,6 +45,9 @@ class IRLPlugin(object):
     # Setup publishers subscribers
     #------------------------------
     def set_sub_and_pub(self):
+        # Possible runs publisher
+        self.possible_runs_pub = rospy.Publisher("possible_runs", LTLStateRuns, queue_size=1, latch=True)
+
         # Learning trigger subscriber
         self.learning_trigger_sub = rospy.Subscriber("irl_trigger", Bool, self.learning_trigger_callback)
 
@@ -97,6 +101,10 @@ class IRLPlugin(object):
                 self.irl_jit(self.ltl_planner.posb_runs)
                 # Reset possible runs
                 self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
+            # Else publish possible runs
+            else:
+                # Publish possible runs
+                self.publish_possible_runs()
 
         #-----------------------------------------------------
         # Else if not learning requested, reset possible runs
@@ -104,10 +112,6 @@ class IRLPlugin(object):
         else:
             # Reset possible runs using current possible states (as no replanning were done and therefor initial state cannot be used)
             self.posb_runs = set([(n,) for n in self.ltl_planner.product.possible_states])
-
-
-        print "======== POSSIBLE RUNS ========"
-        print self.posb_runs
 
     #------------------------------
    	# Update set of possible runs
@@ -122,6 +126,33 @@ class IRLPlugin(object):
                     new_run.append(t_s)
                     new_runs.add(tuple(new_run))        
         return new_runs
+
+    #-----------------------------------------
+    # Format and publish possible run message
+    #-----------------------------------------
+    def publish_possible_runs(self):
+        posb_runs_msg = LTLStateRuns()
+        # Go through each run
+        for run in self.posb_runs:
+            # Create a message for every run in the list
+            possible_states_msg = LTLStateArray()
+            # For all possible state in run, add to the message list
+            for ltl_state in run:
+                ltl_state_msg = LTLState()
+                # If TS state is more than 1 dimension (is a tuple)
+                if type(ltl_state[0]) is tuple:
+                    ltl_state_msg.ts_state.states = list(ltl_state[0])
+                # Else state is a single string
+                else:
+                    ltl_state_msg.ts_state.states = [ltl_state[0]]
+
+                ltl_state_msg.ts_state.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
+                ltl_state_msg.buchi_state = str(ltl_state[1])
+                possible_states_msg.ltl_states.append(ltl_state_msg)
+            # Add run to list
+            posb_runs_msg.runs.append(possible_states_msg)
+
+        self.possible_runs_pub.publish(posb_runs_msg)
 
     #------------------------------------------------------------
     # Functions related to Inverse Reinforcement Learning (IRL)
