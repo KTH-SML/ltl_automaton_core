@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from boolean_formulas.parser import parse as parse_guard
+from ltl_automaton_planner.boolean_formulas.parser import parse as parse_guard
 
 from math import sqrt
 from networkx.classes.digraph import DiGraph
@@ -28,7 +28,8 @@ class TSModel(DiGraph):
         # Build class instance model from product
         DiGraph.__init__(self, 
                          incoming_graph_data=self.product,
-                         initial=self.product.graph['initial'])
+                         initial=self.product.graph['initial'],
+                         ts_state_format=self.product.graph['ts_state_format'])
 
     #----------------------------------
     # Delete and set new initial state
@@ -112,7 +113,7 @@ class TSModel(DiGraph):
 
 class GraphProduct(DiGraph):
     def __init__(self, model_a, model_b):
-        DiGraph.__init__(self, initial=set())
+        DiGraph.__init__(self, initial=set(), ts_state_format=model_a.graph['ts_state_format']+model_b.graph['ts_state_format'])
         self.model_a = model_a
         self.model_b = model_b
         self.do_product()

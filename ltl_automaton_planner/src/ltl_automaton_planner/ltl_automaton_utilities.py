@@ -26,7 +26,7 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
     for model_dim in TS_dict['state_dim']:
         print "processing model dimension "+model_dim
         state_model_dict = TS_dict['state_models'][model_dim]
-        state_model = DiGraph(initial=set())
+        state_model = DiGraph(initial=set(), ts_state_format=[str(model_dim)])
         #------------------
         # Create all nodes
         #------------------
@@ -56,5 +56,19 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
         state_models.append(state_model)
 
     return state_models
+
+def handle_ts_state_msg(ts_state_msg):
+    # Extract TS state from request message
+    # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
+    if len(ts_state_msg.states) > 1:
+        ts_state = tuple(ts_state_msg.states)
+        return ts_state
+    elif len(ts_state_msg.states) == 1:
+        ts_state = ts_state_msg.states[0]
+        return ts_state
+    else:
+        raise ValueError("received empty TS state")
+
+    #TODO Add check for message malformed (not corresponding fields)
 
 

@@ -4,26 +4,27 @@ import numpy
 import Queue
 import rospy
 import sys
-#from init import *
+import importlib
 import yaml
 
 import std_msgs
 
-from ltl_tools.ts import TSModel
-from ltl_tools.ltl_planner import LTLPlanner
+from ltl_automaton_planner.ltl_tools.ts import TSModel
+from ltl_automaton_planner.ltl_tools.ltl_planner import LTLPlanner
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from ltl_automaton_utilities import state_models_from_ts, import_ts_from_file
+from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, import_ts_from_file
 
 #Import LTL automaton message definitions
 from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray
-from ltl_automaton_msgs.srv import TrapCheck, TrapCheckResponse
 
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
 from dynamic_reconfigure.client import Client as DRClient
 from dynamic_reconfigure.server import Server as DRServer
 from ltl_automaton_msgs.cfg import LTLAutomatonDPConfig
+
+#import ltl_automaton_hil_mic.trap_detection
 
 
 def show_automaton(automaton_graph):
@@ -35,14 +36,30 @@ def show_automaton(automaton_graph):
     plt.show()
     return
 
+def handle_ts_state_msg(ts_state_msg):
+    # Extract TS state from request message
+    # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
+    if len(ts_state_msg.states) > 1:
+        ts_state = tuple(ts_state_msg.states)
+        return ts_state
+    elif len(ts_state_msg.states) == 1:
+        ts_state = ts_state_msg.states[0]
+        return ts_state
+    else:
+        raise ValueError("received empty TS state")
+
+    #TODO Add check for message malformed (not corresponding fields)
+
 class MainPlanner(object):
     def __init__(self):
         # init parameters, automaton, etc...
-        self.init_params();
+        self.init_params()
 
-        self.build_automaton();
+        self.build_automaton()
 
-        self.setup_pub_sub();
+        self.setup_pub_sub()
+
+        self.setup_plugins()
 
         # Output plan and first command of plan
         self.publish_possible_states()
@@ -56,19 +73,24 @@ class MainPlanner(object):
         self.initial_beta = rospy.get_param('initial_beta', 1000)
         self.gamma = rospy.get_param('gamma', 10)
 
-        # Get TS from param
-        transition_system_textfile = rospy.get_param('transition_system_textfile')
-        self.transition_system = yaml.load(transition_system_textfile)
-        print self.transition_system
 
+        # LTL task
+        #----------
         # Get LTL hard task and raise error if don't exist
         if (rospy.has_param('hard_task')):
             self.hard_task = rospy.get_param('hard_task')
         else:
             raise InitError("Cannot initialize LTL planner, no hard_task defined")
-
         # Get LTL soft task
         self.soft_task = rospy.get_param('soft_task', "")
+
+
+        # Transition system
+        #-------------------
+        # Get TS from param
+        transition_system_textfile = rospy.get_param('transition_system_textfile')
+        self.transition_system = yaml.load(transition_system_textfile)
+        print self.transition_system
 
         # Parameter if initial TS is set from agent callback or from TS config file
         self.initial_ts_state_from_agent = rospy.get_param('initial_ts_state_from_agent', False)
@@ -79,11 +101,42 @@ class MainPlanner(object):
         else:
             self.initial_state_ts_dict = None
 
-        # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
-        self.re_plan_hil_param = None
-        self.dynparam_srv = DRServer(LTLAutomatonDPConfig, self.dynparam_callback)
 
-    # 
+        # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
+        self.replan_on_unplanned_move = None
+        self.dynparam_srv = DRServer(LTLAutomatonDPConfig, self.dynparam_callback)
+    
+    #---------------------------------------------
+    # Load plugins from a given plugin dictionary
+    #---------------------------------------------
+    # Format for plugin param is:
+    #   plugin/<plugin-name>:
+    #       path: <package-path>
+    #       args: <additional-argument-dictionary>
+    def load_and_init_plugins(self, plugin_dict):
+        self.plugins = {}
+        for plugin in plugin_dict:
+            # Import plugin module
+            try:
+                # Import module to a plugin dict
+                plugin_module = importlib.import_module(plugin_dict[plugin]["path"])
+            except ImportError:
+                # Error log message
+                rospy.logerr("LTL planner: Import error on loading plugin %s at %s" % (str(plugin), plugin_dict[plugin]["path"]))
+                # Go to next plugin
+                break
+
+            # Get plugin class from imported module
+            plugin_class = getattr(plugin_module, str(plugin))
+            # Create plugin object from class using argument dictionary from parameters
+            self.plugins.update({plugin: plugin_class(self.ltl_planner, plugin_dict[plugin]['args'])})
+            rospy.loginfo("LTL planner: using plugin %s" % str(plugin))
+
+        # Init plugins
+        for plugin in self.plugins:
+            self.plugins[plugin].init()
+
+     
     def init_ts_state_from_agent(self, msg=TransitionSystemState):
         initial_state_ts_dict_ = None
 
@@ -106,7 +159,6 @@ class MainPlanner(object):
         # Import TS from config file
         ts_dict = import_ts_from_file(rospy.get_param('transition_system_textfile'))
         state_models = state_models_from_ts(ts_dict, self.initial_state_ts_dict)
-        self.ts_state_format = ts_dict['state_dim']
      
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model = TSModel(state_models)
@@ -114,43 +166,14 @@ class MainPlanner(object):
         self.ltl_planner.optimal()
 
         # Get first value from set
-        self.curr_ts_state = list(self.ltl_planner.product.graph['ts'].graph['initial'])[0]
+        self.ltl_planner.curr_ts_state = list(self.ltl_planner.product.graph['ts'].graph['initial'])[0]
 
         # initialize storage of set of possible runs in product
-        self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
+        self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
         #show_automaton(self.robot_model.product)
+        #show_automaton(self.ltl_planner.product.graph['buchi'])
         #show_automaton(self.ltl_planner.product)
-
-    #---------------------------------------------
-    # Callback for checking is given TS is a trap
-    #---------------------------------------------
-    def trap_check_callback(self, trap_check_req):
-        # Extract state from request
-        ts_state = self.handle_ts_state_msg(trap_check_req.ts_state)
-
-        # Create response message
-        res = TrapCheckResponse()
-
-        # Check if TS state is trap
-        is_trap = self.ltl_planner.is_trap(ts_state)
-        print is_trap
-
-        # TS state is trap
-        if is_trap == 1:
-            res.is_trap = True
-            res.is_connected = True
-        # TS state is not a trap
-        elif is_trap == -1:
-            res.is_trap = False
-            res.is_connected = True
-        # Error: TS state is not connected to current state
-        else:
-            res.is_trap = False
-            res.is_connected = False
-
-        # Return service response
-        return res
 
 
     def setup_pub_sub(self):
@@ -169,32 +192,36 @@ class MainPlanner(object):
         # Initialize publisher to send plan commands
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
 
-        # Initialize check for trap service
-        self.trap_srv = rospy.Service('check_for_trap', TrapCheck, self.trap_check_callback)
 
-        # Initialize subscriber to IRL requests
-        self.irl_sub = rospy.Subscriber('irl_request', std_msgs.msg.Bool, self.irl_request_callback, queue_size=1)
-   
+    def setup_plugins(self):
+        # Get plugin dictionnary from parameters
+        plugin_dict = rospy.get_param('~plugin', {})
+        # If plugins are specified, try to load them
+        self.load_and_init_plugins(plugin_dict)
+
+        # Setup plugin subscribers and publisers
+        for plugin in self.plugins:
+            self.plugins[plugin].set_sub_and_pub()
+
 
     def dynparam_callback(self, config, level):
-        rospy.loginfo("""Reconfigure Request: {re_plan_hil_param}""".format(**config))
-        self.re_plan_hil_param = config['re_plan_hil_param']
-        print('re_plan_hil_param: ' + str(self.re_plan_hil_param))
+        rospy.loginfo("""Reconfigure Request: {replan_on_unplanned_move}""".format(**config))
+        self.replan_on_unplanned_move = config['replan_on_unplanned_move']
+        print('replan_on_unplanned_move: ' + str(self.replan_on_unplanned_move))
         return config
+
 
     def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
         # Extract TS state from message
-        state = self.handle_ts_state_msg(msg.ts_state)
+        state = handle_ts_state_msg(msg.ts_state)
 
-        is_next_state = False
-
+        #-------------------------
         # Check if state is in TS
-        #print('(in ltl_state_callback) msg state = ' + str(state))
-        #print('in ltl_state_callback) robotmodel.product =' + str(self.robot_model.product.nodes()))
-        if (state in self.robot_model.product.nodes()) and not(state == self.curr_ts_state):
+        #-------------------------
+        if (state in self.robot_model.product.nodes()) and not (state == self.ltl_planner.curr_ts_state):
 
             # Update current state
-            self.curr_ts_state = state
+            self.ltl_planner.curr_ts_state = state
 
             #-----------------------------------------------------------------------
             # Try update possible state and if error (forbidden transition), replan
@@ -205,56 +232,30 @@ class MainPlanner(object):
                 # Replan
                 self.ltl_planner.replan_from_ts_state(state)
                 self.publish_plan()
-
-                # Publish new possible states
-                self
                 
                 # Publish next move
                 rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
 
                 return
-            print "========= NEW POSSIBLE STATES =========="
-            print self.ltl_planner.product.possible_states
-            print "=================================="
+
             # Publish possible states
             self.publish_possible_states()
 
-            #------------------------------------------------------------------
-            # Try update set of possible runs and if error, display warning
-            #------------------------------------------------------------------
-            self.posb_runs = self.ltl_planner.update_posb_runs(self.posb_runs, state)
-            if not self.posb_runs:
-                print "WARNING: Empty set of possible runs"
-
-
-            #print('in ltl_state_callback):  self.ltl_planner.segent = ' + str(self.ltl_planner.segment))
-
-            # Check if plan is in prefix or suffix phase
-            if self.ltl_planner.segment == 'line':
-
-                #print('in ltl_state_callback) ltl_planner.run.line[ltl_planner.index] = ' + str(self.ltl_planner.run.line[self.ltl_planner.index]))
-
-                # Check if state is the next state of the plan
-                if state == self.ltl_planner.run.line[self.ltl_planner.index+1]:
-                    is_next_state = True
-
-            if self.ltl_planner.segment == 'loop':
-                # Check if state is the next state of the plan
-                if state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
-                    is_next_state = True
-
+            #--------------------------
+            # Manage next move in plan
+            #--------------------------
             # If state is next state in plan, find next_move and output
-            if is_next_state:
+            if self.is_next_state_in_plan(state):
                 self.ltl_planner.find_next_move()
 
                 # Publish next move
                 print('Planner.py: Publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
-               
-            elif not(is_next_state):
-                #Set state as initial
 
+            # If state is not the next one in plan replan 
+            else:
+                #Set state as initial
                 # Replan
                 self.ltl_planner.replan_from_ts_state(state)
                 self.publish_plan()
@@ -263,7 +264,14 @@ class MainPlanner(object):
                 print('Planner.py: **Re-planning** and publishing next move')
                 self.plan_pub.publish(self.ltl_planner.next_move)
 
-        elif state == self.curr_ts_state:
+            #-------------
+            # Run plugins
+            #-------------
+            for plugin in self.plugins:
+                self.plugins[plugin].run_at_ts_update(state)
+
+
+        elif state == self.ltl_planner.curr_ts_state:
             rospy.logwarn("Already received state")
 
         elif not (state in self.robot_model.product.nodes()):
@@ -271,29 +279,21 @@ class MainPlanner(object):
             self.plan_pub.publish('None')
             rospy.logwarn('State is not in TS plan!')
 
-    def irl_request_callback(self, msg=False):
-        if msg:
-            print('Planner.py **Relearning** and publishing next move')
-            self.ltl_planner.irl_jit(self.posb_runs)
-            # Replan
-            self.ltl_planner.replan_from_ts_state(self.curr_ts_state)
-            self.publish_plan()
-            self.ltl_planner.find_next_move()
-            self.plan_pub.publish(self.ltl_planner.next_move)
-
-    def handle_ts_state_msg(self, ts_state_msg):
-        # Extract TS state from request message
-        # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
-        if len(ts_state_msg.states) > 1:
-            ts_state = tuple(ts_state_msg.states)
-            return ts_state
-        elif len(ts_state_msg.states) == 1:
-            ts_state = ts_state_msg.states[0]
-            return ts_state
-        else:
-            raise ValueError("received empty TS state")
-
-        #TODO Add check for message malformed (not corresponding fields)
+    #-----------------------------------------------------
+    # Check if given TS state is the next one in the plan
+    #-----------------------------------------------------
+    def is_next_state_in_plan(self, ts_state):
+            # Check if plan is in prefix phase
+            if self.ltl_planner.segment == 'line':
+                # Check if state is the next state of the plan
+                if ts_state == self.ltl_planner.run.line[self.ltl_planner.index+1]:
+                    return True
+            # Check if plan is in suffix phase
+            elif self.ltl_planner.segment == 'loop':
+                # Check if state is the next state of the plan
+                if ts_state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
+                    return False
+            return True
 
     #----------------------------------------------
     # Publish prefix and suffix plans from planner
@@ -309,7 +309,7 @@ class MainPlanner(object):
             # Go through all TS state in plan and add it as TransitionSystemState message
             for ts_state in self.ltl_planner.run.line:
                 ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = self.ts_state_format
+                ts_state_msg.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
                 # If TS state is more than 1 dimension (is a tuple)
                 if type(ts_state) is tuple:
                     ts_state_msg.states = list(ts_state)
@@ -330,7 +330,7 @@ class MainPlanner(object):
             # Go through all TS state in plan and add it as TransitionSystemState message
             for ts_state in self.ltl_planner.run.loop:
                 ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = self.ts_state_format
+                ts_state_msg.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
                 # If TS state is more than 1 dimension (is a tuple)
                 if type(ts_state) is tuple:
                     ts_state_msg.states = list(ts_state)
@@ -360,12 +360,14 @@ class MainPlanner(object):
             else:
                 ltl_state_msg.ts_state.states = [ltl_state[0]]
 
-            ltl_state_msg.ts_state.state_dimension_names = self.ts_state_format
-            ltl_state_msg.buchi_state = ltl_state[1]
+            ltl_state_msg.ts_state.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
+            ltl_state_msg.buchi_state = str(ltl_state[1])
             possible_states_msg.ltl_states.append(ltl_state_msg)
 
         # Publish
         self.possible_states_pub.publish(possible_states_msg)
+        print "-------- possible states -----------"
+        print self.ltl_planner.product.possible_states
 
 
 #==============================

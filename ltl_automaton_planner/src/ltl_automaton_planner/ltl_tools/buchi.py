@@ -2,7 +2,7 @@
 
 from ltl2ba import run_ltl2ba
 from promela import parse as parse_ltl, find_states, find_symbols
-from boolean_formulas.parser import parse as parse_guard
+from ltl_automaton_planner.boolean_formulas.parser import parse as parse_guard
 from itertools import product as cartesian_product
 
 from networkx.classes.digraph import DiGraph

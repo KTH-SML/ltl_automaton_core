@@ -40,6 +40,7 @@ generate_dynamic_reconfigure_options(
    LTLPlan.msg
    LTLState.msg
    LTLStateArray.msg
+   LTLStateRuns.msg
  )
 
 ## Generate services in the 'srv' folder
