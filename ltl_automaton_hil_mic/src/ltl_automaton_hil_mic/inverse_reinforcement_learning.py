@@ -9,14 +9,14 @@ from ltl_automaton_planner.ltl_tools.discrete_plan import dijkstra_plan_networkX
 #===================================================
 # As long as the learning trigger is on, the plugin 
 # will save the possible runs. Learning is triggered 
-# when the trigger  variable goes back to false or 
+# when the trigger variable goes back to false or 
 # when the maximum size of possible runs is reached
 #===================================================
 class IRLPlugin(object):
+    #--------------------------------------------------------------------------
+    # Plugin object constructor, must have as argument: ltl_planner, args_dict
+    #--------------------------------------------------------------------------
     def __init__(self, ltl_planner, args_dict=dict()):
-        print "========= CREATED PLUGIN =========="
-        print "argument dict is"
-        print args_dict
         self.ltl_planner = ltl_planner
         self.beta = self.ltl_planner.product.graph['beta']
 
@@ -38,40 +38,21 @@ class IRLPlugin(object):
         self.learning_trigger = False 
         self.prev_learning_trigger = False
 
+    #-------------------------------------------
+    # Initialized afer constructor by main code
+    #-------------------------------------------
     def init(self):
-        None
+        rospy.loginfo("IRL plugin initialized with maximum buffer size of %i states for possible runs" % (self.max_run_buffer_size))
 
-    #------------------------------
-    # Setup publishers subscribers
-    #------------------------------
+    #--------------------------------------
+    # Setup ROS subscribers and publishers
+    #--------------------------------------
     def set_sub_and_pub(self):
         # Possible runs publisher
         self.possible_runs_pub = rospy.Publisher("possible_runs", LTLStateRuns, queue_size=1, latch=True)
 
         # Learning trigger subscriber
         self.learning_trigger_sub = rospy.Subscriber("irl_trigger", Bool, self.learning_trigger_callback)
-
-    #---------------------------------------------------
-    # Set learning trigger on or off according to topic
-    #---------------------------------------------------
-    def learning_trigger_callback(self, msg):
-        self.learning_trigger = msg.data
-
-        # If learning trigger just switched on, display log
-        if not self.prev_learning_trigger and self.learning_trigger:
-            rospy.loginfo("IRL plugin: knowledge acquisition triggered")
-            # Save trigger value
-            self.prev_learning_trigger = True
-
-        # If learning trigger just switched off, learn and replan
-        elif self.prev_learning_trigger and not self.learning_trigger:
-            rospy.loginfo("IRL plugin: learning and replanning triggered on previoulsy acquired knowledge")
-            # Learn and replan
-            self.irl_jit(self.ltl_planner.posb_runs)
-            # Reset possible runs
-            self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
-            # Save trigger value
-            self.prev_learning_trigger = False
 
     #------------------------------
     # Run at every TS state update
@@ -112,6 +93,28 @@ class IRLPlugin(object):
         else:
             # Reset possible runs using current possible states (as no replanning were done and therefor initial state cannot be used)
             self.posb_runs = set([(n,) for n in self.ltl_planner.product.possible_states])
+   
+    #---------------------------------------------------
+    # Set learning trigger on or off according to topic
+    #---------------------------------------------------
+    def learning_trigger_callback(self, msg):
+        self.learning_trigger = msg.data
+
+        # If learning trigger just switched on, display log
+        if not self.prev_learning_trigger and self.learning_trigger:
+            rospy.loginfo("IRL plugin: knowledge acquisition triggered")
+            # Save trigger value
+            self.prev_learning_trigger = True
+
+        # If learning trigger just switched off, learn and replan
+        elif self.prev_learning_trigger and not self.learning_trigger:
+            rospy.loginfo("IRL plugin: learning and replanning triggered on previoulsy acquired knowledge")
+            # Learn and replan
+            self.irl_jit(self.ltl_planner.posb_runs)
+            # Reset possible runs
+            self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
+            # Save trigger value
+            self.prev_learning_trigger = False
 
     #------------------------------
    	# Update set of possible runs
@@ -183,7 +186,6 @@ class IRLPlugin(object):
     def margin_opt_path(self, opt_path, beta):
         self.set_beta(beta)
         self.ltl_planner.product.build_full_margin(opt_path)
-        #marg_path = dijkstra_path_networkX(self.ltl_planner.product, opt_path[0], opt_path[-1])
         self.run, plantime = dijkstra_plan_networkX(self.ltl_planner.product, self.ltl_planner.gamma)
         return self.run.suffix
 

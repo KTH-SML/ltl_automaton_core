@@ -4,25 +4,38 @@ from ltl_automaton_msgs.srv import TrapCheck, TrapCheckResponse
 from networkx import dijkstra_predecessor_and_distance, has_path
 from ltl_automaton_planner.ltl_automaton_utilities import handle_ts_state_msg
 
-
+#===================================================
+#           Trap State Detection Plugin
+#===================================================
+# Provide a check for trap service. The service will
+# test a TS state and returns if reaching it will 
+#   create a violation of the hard task or not.
+#===================================================
 class TrapDetectionPlugin(object):
+    #--------------------------------------------------------------------------
+    # Plugin object constructor, must have as argument: ltl_planner, args_dict
+    #--------------------------------------------------------------------------
     def __init__(self, ltl_planner, args_dict):
-        print "========= CREATED PLUGIN =========="
-        print "argument dict is"
-        print args_dict
         self.ltl_planner = ltl_planner
-        print "============================"
 
+    #-------------------------------------------
+    # Initialized afer constructor by main code
+    #-------------------------------------------
     def init(self):
         None
 
+    #--------------------------------------
+    # Setup ROS subscribers and publishers
+    #--------------------------------------
     def set_sub_and_pub(self):
         # Initialize check for trap service
         self.trap_srv = rospy.Service('check_for_trap', TrapCheck, self.trap_check_callback)
 
+    #------------------------------
+    # Run at every TS state update
+    #------------------------------
     def run_at_ts_update(self, ts_state):
         None
-
 
     #---------------------------------------------
     # Callback for checking is given TS is a trap
@@ -61,9 +74,6 @@ class TrapDetectionPlugin(object):
     def is_trap(self, ts_state):
         # Get possible states if current states were to be updated from a given TS state
         reachable_states = self.ltl_planner.product.get_possible_states(ts_state)
-        print "===== possible states if trap reached ====="
-        print reachable_states
-        print "====================================="
 
         # If reachable states exist
         if reachable_states:
@@ -85,8 +95,6 @@ class TrapDetectionPlugin(object):
     def check_possible_states_for_trap(self, possible_state_set):
         for s in possible_state_set:
             if self.has_path_to_accept_with_cycle(s):
-                #print "has path"
-                #print "---------------------------------"
                 return False              
         return True
 
