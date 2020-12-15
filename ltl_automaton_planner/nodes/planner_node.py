@@ -39,7 +39,9 @@ def show_automaton(automaton_graph):
 def handle_ts_state_msg(ts_state_msg):
     # Extract TS state from request message
     # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
-    if len(ts_state_msg.states) > 1:
+    if not (len(ts_state_msg.states) == len(ts_state_msg.state_dimension_names)):
+        raise ValueError("Received TS states don't match TS state models: "+str(len(ts_state_msg.states))+" initial states and "+str(len(ts_state_msg.state_dimension_names))+" state models")
+    elif len(ts_state_msg.states) > 1:
         ts_state = tuple(ts_state_msg.states)
         return ts_state
     elif len(ts_state_msg.states) == 1:
@@ -93,11 +95,14 @@ class MainPlanner(object):
         print self.transition_system
 
         # Parameter if initial TS is set from agent callback or from TS config file
-        self.initial_ts_state_from_agent = rospy.get_param('initial_ts_state_from_agent', False)
+        self.initial_ts_state_from_agent = rospy.get_param('~initial_ts_state_from_agent', False)
 
         #If initial TS states is from agent, wait from agent state callback
         if self.initial_ts_state_from_agent:
-            self.initial_state_ts_dict = init_ts_state_from_agent(rospy.wait_for_message("ts_state", TransitionSystemState))
+            self.initial_state_ts_dict = None
+            rospy.loginfo("LTL planner: waiting for initial TS state from agent to initialize")
+            while not self.initial_state_ts_dict:
+                self.initial_state_ts_dict = self.init_ts_state_from_agent(rospy.wait_for_message("ts_state", TransitionSystemStateStamped))
         else:
             self.initial_state_ts_dict = None
 
@@ -138,19 +143,19 @@ class MainPlanner(object):
             self.plugins[plugin].init()
 
      
-    def init_ts_state_from_agent(self, msg=TransitionSystemState):
+    def init_ts_state_from_agent(self, msg=TransitionSystemStateStamped):
         initial_state_ts_dict_ = None
 
         # If message is conform (same number of state as number of state dimensions)
-        if (len(msg.states) == len(msg.state_dimension_names)):
+        if (len(msg.ts_state.states) == len(msg.ts_state.state_dimension_names)):
             # Create dictionnary with paired dimension_name/state_value
             initial_state_ts_dict_ = dict()
-            for i in range(msg.states):
-                initial_state_ts_dict_.append({msg.state_dimension_names[i] : msg.states[i]}) 
+            for i in range(len(msg.ts_state.states)):
+                initial_state_ts_dict_.update({msg.ts_state.state_dimension_names[i] : msg.ts_state.states[i]}) 
 
         # Else message is malformed, raise error
         else:
-            raise TSError("initial states don't match TS state models: "+len(msg.states)+" initial states and "+len(msg.state_dimension_names)+" state models")
+            rospy.logerr("LTL planner: received initial states don't match TS state models: "+str(len(msg.ts_state.states))+" initial states and "+str(len(msg.ts_state.state_dimension_names))+" state models")
         
         # Return initial state dictionnary
         return initial_state_ts_dict_

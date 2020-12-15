@@ -15,12 +15,14 @@ def import_ts_from_file(transition_system_textfile):
 
 def state_models_from_ts(TS_dict, initial_states_dict=None):
     state_models = []
+    print "=========== INIT STATE DICT ==========="
+    print initial_states_dict
 
     # If initial states are given as argument
     if initial_states_dict:
         # Check that dimensions are conform
-        if (len(initial_states.keys) != len(TS_dict['state_dim'])):
-            raise TSError("initial states don't match TS state models: "+len(initial_states)+" initial states and "+len(TS_dict['state_dim'])+" state models")
+        if (len(initial_states_dict.keys()) != len(TS_dict['state_dim'])):
+            raise ValueError("initial states don't match TS state models: "+len(initial_states)+" initial states and "+len(TS_dict['state_dim'])+" state models")
 
     # For every state model define in file, using state_dim to ensure order (dict are not ordered)
     for model_dim in TS_dict['state_dim']:
@@ -36,7 +38,9 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
         if not initial_states_dict:
             state_model.graph['initial']=set([state_model_dict['initial']])
         else:
-            state_model.graph['initial']=set(initial_states_dict[model_dim])
+            print "---"
+            print initial_states_dict[model_dim]
+            state_model.graph['initial']=set([initial_states_dict[model_dim]])
         #----------------------------------
         # Connect previously created nodes
         #----------------------------------
@@ -54,13 +58,16 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
         # Add state model to list
         #-------------------------
         state_models.append(state_model)
+        print state_model.graph['initial']
 
     return state_models
 
 def handle_ts_state_msg(ts_state_msg):
     # Extract TS state from request message
     # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
-    if len(ts_state_msg.states) > 1:
+    if not (len(ts_state_msg.states) == len(ts_state_msg.state_dimension_names)):
+        raise ValueError("Received TS states don't match TS state models: "+str(len(ts_state_msg.states))+" initial states and "+str(len(ts_state_msg.state_dimension_names))+" state models")
+    elif len(ts_state_msg.states) > 1:
         ts_state = tuple(ts_state_msg.states)
         return ts_state
     elif len(ts_state_msg.states) == 1:

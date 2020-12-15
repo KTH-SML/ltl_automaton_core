@@ -39,6 +39,8 @@ class ProdAut(DiGraph):
         # Build initial possible state set from initial state
         self.possible_states = set(self.graph['initial'])
 
+        print 'full product constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges()))
+
     # Build required for IRL (TODO: check exactly how this works)
     def build_full_margin(self, opt_path):
         opt_edges = None

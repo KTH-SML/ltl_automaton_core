@@ -30,6 +30,9 @@ class TSModel(DiGraph):
                          incoming_graph_data=self.product,
                          initial=self.product.graph['initial'],
                          ts_state_format=self.product.graph['ts_state_format'])
+        print 'full_model constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges()))
+        print "---initial in TS---"
+        print self.graph['initial']
 
     #----------------------------------
     # Delete and set new initial state
