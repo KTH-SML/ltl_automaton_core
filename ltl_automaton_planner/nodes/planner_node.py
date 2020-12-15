@@ -283,17 +283,17 @@ class MainPlanner(object):
     # Check if given TS state is the next one in the plan
     #-----------------------------------------------------
     def is_next_state_in_plan(self, ts_state):
-            # Check if plan is in prefix phase
-            if self.ltl_planner.segment == 'line':
-                # Check if state is the next state of the plan
-                if ts_state == self.ltl_planner.run.line[self.ltl_planner.index+1]:
-                    return True
-            # Check if plan is in suffix phase
-            elif self.ltl_planner.segment == 'loop':
-                # Check if state is the next state of the plan
-                if ts_state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
-                    return False
-            return True
+        # Check if plan is in prefix phase
+        if self.ltl_planner.segment == 'line':
+            # Check if state is the next state of the plan
+            if ts_state == self.ltl_planner.run.line[self.ltl_planner.index+1]:
+                return True
+        # Check if plan is in suffix phase
+        elif self.ltl_planner.segment == 'loop':
+            # Check if state is the next state of the plan
+            if ts_state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
+                return True
+        return False
 
     #----------------------------------------------
     # Publish prefix and suffix plans from planner
