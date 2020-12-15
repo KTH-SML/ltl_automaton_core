@@ -53,6 +53,22 @@ class IRLPlugin(object):
     def learning_trigger_callback(self, msg):
         self.learning_trigger = msg.data
 
+        # If learning trigger just switched on, display log
+        if not self.prev_learning_trigger and self.learning_trigger:
+            rospy.loginfo("IRL plugin: knowledge acquisition triggered")
+            # Save trigger value
+            self.prev_learning_trigger = True
+
+        # If learning trigger just switched off, learn and replan
+        elif self.prev_learning_trigger and not self.learning_trigger:
+            rospy.loginfo("IRL plugin: learning and replanning triggered on previoulsy acquired knowledge")
+            # Learn and replan
+            self.irl_jit(self.ltl_planner.posb_runs)
+            # Reset possible runs
+            self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
+            # Save trigger value
+            self.prev_learning_trigger = False
+
     #------------------------------
     # Run at every TS state update
     #------------------------------
@@ -82,25 +98,11 @@ class IRLPlugin(object):
                 # Reset possible runs
                 self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
-            # Save trigger value
-            self.prev_learning_trigger = True
-
-        #-----------------------------------------------------------------
-        # Else if learning trigger just switched to off, learn and replan
-        #-----------------------------------------------------------------
-        elif self.prev_learning_trigger and not self.learning_trigger:
-            # Learn and replan
-            self.irl_jit(self.ltl_planner.posb_runs)
-            # Reset possible runs
-            self.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
-            # Save trigger value
-            self.prev_learning_trigger = False
-
         #-----------------------------------------------------
         # Else if not learning requested, reset possible runs
         #-----------------------------------------------------
         else:
-            # Reset possible runs using current possible states (as no replanning were done)
+            # Reset possible runs using current possible states (as no replanning were done and therefor initial state cannot be used)
             self.posb_runs = set([(n,) for n in self.ltl_planner.product.possible_states])
 
 
