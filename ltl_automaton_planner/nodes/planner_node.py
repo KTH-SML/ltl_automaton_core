@@ -103,7 +103,8 @@ class MainPlanner(object):
 
 
         # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
-        self.replan_on_unplanned_move = None
+        self.replan_on_unplanned_move = True
+        self.allow_repeating_state_in_plan = False
         self.dynparam_srv = DRServer(LTLAutomatonDPConfig, self.dynparam_callback)
     
     #---------------------------------------------
@@ -205,9 +206,8 @@ class MainPlanner(object):
 
 
     def dynparam_callback(self, config, level):
-        rospy.loginfo("""Reconfigure Request: {replan_on_unplanned_move}""".format(**config))
         self.replan_on_unplanned_move = config['replan_on_unplanned_move']
-        print('replan_on_unplanned_move: ' + str(self.replan_on_unplanned_move))
+        self.allow_repeating_state_in_plan = config['allow_repeating_state_in_plan']
         return config
 
 
@@ -220,8 +220,8 @@ class MainPlanner(object):
         #-------------------------
         if (state in self.robot_model.product.nodes()):
 
-            # If state is different from previous state
-            if not (state == self.ltl_planner.curr_ts_state):
+            # If state is different from previous state or parameter allow for repeating state in plan
+            if (not (state == self.ltl_planner.curr_ts_state)) or (self.allow_repeating_state_in_plan):
 
                 # Update current state
                 self.ltl_planner.curr_ts_state = state
@@ -273,7 +273,7 @@ class MainPlanner(object):
                 for plugin in self.plugins:
                     self.plugins[plugin].run_at_ts_update(state)
 
-            # If state is the same as previous state
+            # If state is the same as previous state and parameters "allow for repeating state in plan" is false
             else:
                 rospy.logwarn("LTL planner: already received TS state %s" % (str(state)))
 
