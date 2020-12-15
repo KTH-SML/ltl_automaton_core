@@ -218,63 +218,69 @@ class MainPlanner(object):
         #-------------------------
         # Check if state is in TS
         #-------------------------
-        if (state in self.robot_model.product.nodes()) and not (state == self.ltl_planner.curr_ts_state):
+        if (state in self.robot_model.product.nodes()):
 
-            # Update current state
-            self.ltl_planner.curr_ts_state = state
+            # If state is different from previous state
+            if not (state == self.ltl_planner.curr_ts_state):
 
-            #-----------------------------------------------------------------------
-            # Try update possible state and if error (forbidden transition), replan
-            #-----------------------------------------------------------------------
-            if not self.ltl_planner.update_possible_states(state):
-                rospy.logerr('Can not update possible states - forbidden transition, replanning...')
+                # Update current state
+                self.ltl_planner.curr_ts_state = state
 
-                # Replan
-                self.ltl_planner.replan_from_ts_state(state)
-                self.publish_plan()
-                
-                # Publish next move
-                rospy.logwarn('Planner.py: **Re-planning** and publishing next move')
-                self.plan_pub.publish(self.ltl_planner.next_move)
+                #-----------------------------------------------------------------------
+                # Try update possible state and if error (forbidden transition), replan
+                #-----------------------------------------------------------------------
+                if not self.ltl_planner.update_possible_states(state):
+                    rospy.logerr('Can not update possible states - forbidden transition, replanning...')
 
-                return
+                    # Replan
+                    self.ltl_planner.replan_from_ts_state(state)
+                    self.publish_plan()
+                    
+                    # Publish next move
+                    rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
+                    self.plan_pub.publish(self.ltl_planner.next_move)
 
-            # Publish possible states
-            self.publish_possible_states()
+                    return
 
-            #--------------------------
-            # Manage next move in plan
-            #--------------------------
-            # If state is next state in plan, find next_move and output
-            if self.is_next_state_in_plan(state):
-                self.ltl_planner.find_next_move()
+                # Publish possible states
+                self.publish_possible_states()
 
-                # Publish next move
-                print('Planner.py: Publishing next move')
-                self.plan_pub.publish(self.ltl_planner.next_move)
+                #--------------------------
+                # Manage next move in plan
+                #--------------------------
+                # If state is next state in plan, find next_move and output
+                if self.is_next_state_in_plan(state):
+                    self.ltl_planner.find_next_move()
 
-            # If state is not the next one in plan replan 
+                    # Publish next move
+                    rospy.loginfo('LTL planner: Publishing next move')
+                    self.plan_pub.publish(self.ltl_planner.next_move)
+
+                # If state is not the next one in plan replan 
+                elif self.replan_on_unplanned_move:
+                    #Set state as initial
+                    # Replan
+                    self.ltl_planner.replan_from_ts_state(state)
+                    self.publish_plan()
+
+                    # Publish next move
+                    rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
+                    self.plan_pub.publish(self.ltl_planner.next_move)
+
+                #-------------
+                # Run plugins
+                #-------------
+                for plugin in self.plugins:
+                    self.plugins[plugin].run_at_ts_update(state)
+
+            # If state is the same as previous state
             else:
-                #Set state as initial
-                # Replan
-                self.ltl_planner.replan_from_ts_state(state)
-                self.publish_plan()
+                rospy.logwarn("LTL planner: already received TS state %s" % (str(state)))
 
-                # Publish next move
-                print('Planner.py: **Re-planning** and publishing next move')
-                self.plan_pub.publish(self.ltl_planner.next_move)
-
-            #-------------
-            # Run plugins
-            #-------------
-            for plugin in self.plugins:
-                self.plugins[plugin].run_at_ts_update(state)
-
-
-        elif state == self.ltl_planner.curr_ts_state:
-            rospy.logwarn("Already received state")
-
-        elif not (state in self.robot_model.product.nodes()):
+        #--------------------------------------------
+        # If state not part of the transition system
+        #--------------------------------------------
+        else:
             #ERROR: unknown state (not part of TS)
             self.plan_pub.publish('None')
             rospy.logwarn('State is not in TS plan!')
@@ -366,8 +372,6 @@ class MainPlanner(object):
 
         # Publish
         self.possible_states_pub.publish(possible_states_msg)
-        print "-------- possible states -----------"
-        print self.ltl_planner.product.possible_states
 
 
 #==============================
