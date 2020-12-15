@@ -26,7 +26,7 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
     for model_dim in TS_dict['state_dim']:
         print "processing model dimension "+model_dim
         state_model_dict = TS_dict['state_models'][model_dim]
-        state_model = DiGraph(initial=set())
+        state_model = DiGraph(initial=set(), ts_state_format=[str(model_dim)])
         #------------------
         # Create all nodes
         #------------------

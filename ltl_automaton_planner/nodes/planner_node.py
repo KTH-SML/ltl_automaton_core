@@ -159,7 +159,6 @@ class MainPlanner(object):
         # Import TS from config file
         ts_dict = import_ts_from_file(rospy.get_param('transition_system_textfile'))
         state_models = state_models_from_ts(ts_dict, self.initial_state_ts_dict)
-        self.ts_state_format = ts_dict['state_dim']
      
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model = TSModel(state_models)
@@ -173,6 +172,7 @@ class MainPlanner(object):
         self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
         #show_automaton(self.robot_model.product)
+        #show_automaton(self.ltl_planner.product.graph['buchi'])
         #show_automaton(self.ltl_planner.product)
 
 
@@ -209,7 +209,7 @@ class MainPlanner(object):
         self.replan_on_unplanned_move = config['replan_on_unplanned_move']
         print('replan_on_unplanned_move: ' + str(self.replan_on_unplanned_move))
         return config
-        
+
 
     def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
         # Extract TS state from message
@@ -309,7 +309,7 @@ class MainPlanner(object):
             # Go through all TS state in plan and add it as TransitionSystemState message
             for ts_state in self.ltl_planner.run.line:
                 ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = self.ts_state_format
+                ts_state_msg.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
                 # If TS state is more than 1 dimension (is a tuple)
                 if type(ts_state) is tuple:
                     ts_state_msg.states = list(ts_state)
@@ -330,7 +330,7 @@ class MainPlanner(object):
             # Go through all TS state in plan and add it as TransitionSystemState message
             for ts_state in self.ltl_planner.run.loop:
                 ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = self.ts_state_format
+                ts_state_msg.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
                 # If TS state is more than 1 dimension (is a tuple)
                 if type(ts_state) is tuple:
                     ts_state_msg.states = list(ts_state)
@@ -360,12 +360,14 @@ class MainPlanner(object):
             else:
                 ltl_state_msg.ts_state.states = [ltl_state[0]]
 
-            ltl_state_msg.ts_state.state_dimension_names = self.ts_state_format
-            ltl_state_msg.buchi_state = ltl_state[1]
+            ltl_state_msg.ts_state.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
+            ltl_state_msg.buchi_state = str(ltl_state[1])
             possible_states_msg.ltl_states.append(ltl_state_msg)
 
         # Publish
         self.possible_states_pub.publish(possible_states_msg)
+        print "-------- possible states -----------"
+        print self.ltl_planner.product.possible_states
 
 
 #==============================
