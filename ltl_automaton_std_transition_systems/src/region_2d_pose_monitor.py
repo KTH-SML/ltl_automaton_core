@@ -204,12 +204,12 @@ class Region2DPoseStateMonitor(object):
     #-------------------------------------
     # Check if pose is in a given station
     #-------------------------------------
-    # station dict format: {connected_to: {}, attr: {type, pose, radius, angle_threshold, dist_hysteresis, angle_hysteresis}}
+    # station dict format: {connected_to: {}, attr: {type, pose, radius, angle_tolerance, dist_hysteresis, angle_hysteresis}}
     # Station is a disk, with orientation being checked as well
     def is_in_station(self, pose, station, dist_hysteresis = 0, angle_hysteresis = 0):
         station_pose = self.region_dict["nodes"][station]["attr"]["pose"]
         station_radius = self.region_dict["nodes"][station]["attr"]["radius"]
-        angle_threshold = self.region_dict["nodes"][station]["attr"]["angle_threshold"]
+        angle_tolerance = self.region_dict["nodes"][station]["attr"]["angle_tolerance"]
 
         dist = self.dist_2d_err(pose, station_pose)
         angle = self.yaw_angle_err(pose, station_pose)
@@ -218,7 +218,7 @@ class Region2DPoseStateMonitor(object):
 
         # If distance is inferior to radius plus hysteresis,
         # or if angle is inferior to threshold plus hysteresis, agent is in of region
-        if (dist < station_radius + dist_hysteresis) and (angle < angle_threshold + angle_hysteresis):
+        if (dist < station_radius + dist_hysteresis) and (angle < angle_tolerance + angle_hysteresis):
             #print "True"
             return True
         else:
