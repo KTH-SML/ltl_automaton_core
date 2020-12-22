@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from product import ProdAut_Run
+from ltl_automaton_planner.ltl_tools.product import ProdAut_Run
 from collections import defaultdict
 from networkx import dijkstra_predecessor_and_distance
 import time 
@@ -16,7 +16,7 @@ def dijkstra_plan_networkX(product, gamma=10):
     loop = {}
     # minimal circles
     for prod_target in product.graph['accept']:
-                #print 'prod_target', prod_target
+                #print('prod_target', prod_target)
                 # accepting state in self-loop
                 if prod_target in product.predecessors(prod_target):
                         loop[prod_target] = (product.edges[prod_target,prod_target]["weight"], [prod_target, prod_target])
@@ -35,7 +35,7 @@ def dijkstra_plan_networkX(product, gamma=10):
     for prod_init in product.graph['initial']:
         line = {}
         line_pre, line_dist = dijkstra_predecessor_and_distance(product, prod_init)
-        for target in loop.iterkeys():
+        for target in loop.keys():
             if target in line_dist:
                 line[target] = line_dist[target]+gamma*loop[target][0]
         if line:
@@ -47,76 +47,76 @@ def dijkstra_plan_networkX(product, gamma=10):
     if runs:
         prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + gamma*p[3])
         run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+gamma*sufcost)
-        print '=================='
-        print 'Dijkstra_plan_networkX done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost)
+        print('==================')
+        print('Dijkstra_plan_networkX done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost))
         return run, time.time()-start
-        #print '\n==================\n'
-    print '=================='        
-    print 'No accepting run found in optimal planning!'
+        #print('\n==================\n'
+    print('==================')      
+    print('No accepting run found in optimal planning!')
     return None, None
 
 
 def dijkstra_plan_optimal(product, gamma=10, start_set=None):
     start = time.time()
-    #print 'dijkstra plan started!'
+    #print('dijkstra plan started!)'
     runs = {}
     accept_set = product.graph['accept']
     if start_set == None:
         init_set = product.graph['initial']
     else:
         init_set = start_set
-    #print 'number of accepting states %d' %(len(accept_set))
-    #print 'number of initial states %d' %(len(init_set))
+    #print('number of accepting states %d' %(len(accept_set)))
+    #print('number of initial states %d' %(len(init_set)))
     loop_dict = {}
     for init_prod_node in init_set:
         for (prefix, precost) in dijkstra_targets(product, init_prod_node, accept_set):
-            #print 'accept node reached %s' %(str(prefix[-1]))
+            #print('accept node reached %s' %(str(prefix[-1]))
             if prefix[-1] in loop_dict:
                 suffix, sufcost = loop_dict[prefix[-1]]
             else:
                 suffix, sufcost = dijkstra_loop(product, prefix[-1])
-                #print suffix, sufcost
+                #print(suffix, sufcost
                 loop_dict[prefix[-1]] = (suffix, sufcost)
             if suffix:
                 runs[(prefix[0], prefix[-1])] = (prefix, precost, suffix, sufcost)
-                #print 'find run from %s to %s and back' %(str(init_prod_node), str(prefix[-1]))
+                #print('find run from %s to %s and back' %(str(init_prod_node), str(prefix[-1]))
     if runs:
          prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + gamma*p[3])
          run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+gamma*sufcost)
-         #print '\n==================\n'
-         print 'optimal_dijkstra_olf done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost)
+         #print('\n==================\n')
+         print('optimal_dijkstra_olf done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost))
          return run, time.time()-start
-    print 'no accepting run found in optimal planning!'
+    print('no accepting run found in optimal planning!')
 
 
 def dijkstra_plan_bounded(product, time_limit=3, gamma=10):
     start = time.time()
-    print 'dijkstra plan started!'
+    print('dijkstra plan started!')
     runs = {}
     accept_set = product.graph['accept']
     init_set = product.graph['initial']
-    print 'number of accepting states %d' %(len(accept_set))
-    print 'number of initial states %d' %(len(init_set))
+    print('number of accepting states %d' %(len(accept_set)))
+    print('number of initial states %d' %(len(init_set)))
     loop_dict = {}
     for init_prod_node in init_set:
         for (prefix, precost) in dijkstra_targets(product, init_prod_node, accept_set):
-            #print 'accept node reached %s' %(str(prefix[-1]))
+            #print('accept node reached %s' %(str(prefix[-1])))
             if prefix[-1] in loop_dict:
                 suffix, sufcost = loop_dict[prefix[-1]]
             else:
                 suffix, sufcost = dijkstra_loop(product, prefix[-1])
                 loop_dict[prefix[-1]] = (suffix, sufcost)
-            #print suffix, sufcost
+            #print(suffix, sufcost)
             if suffix:
                 runs[(prefix[0], prefix[-1])] = (prefix, precost, suffix, sufcost)
-                #print 'find run from %s to %s and back' %(str(init_prod_node), str(prefix[-1]))
+                #print('find run from %s to %s and back' %(str(init_prod_node), str(prefix[-1])))
             if time.time()-start > time_limit:  # time limit has reached
                 if runs:
                      prefix, precost, suffix, sufcost = min(runs.values(), key = lambda p: p[1] + gamma*p[3])
                      run = ProdAut_Run(product, prefix, precost, suffix, sufcost, precost+gamma*sufcost)
-                     print 'optimal_dijkstra done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost)
+                     print('optimal_dijkstra done within %.2fs: precost %.2f, sufcost %.2f' %(time.time()-start, precost, sufcost))
                      return run, time.time()-start
-    print 'no accepting run found in optimal planning!'
+    print('no accepting run found in optimal planning!')
     
 
 def dijkstra_targets(product, prod_source, prod_targets):
@@ -145,13 +145,13 @@ def dijkstra_targets(product, prod_source, prod_targets):
             if t_prod_node not in visited:
                 tovisit.add(t_prod_node)
         if f_prod_node in feasible_targets:
-        #print 'found path to buchi_target %s' %str(buchi_target)
+        #print('found path to buchi_target %s' %str(buchi_target))
             feasible_targets.remove(f_prod_node)
             yield compute_path_from_pre(pre_node, f_prod_node), dist[f_prod_node]
 
 
 def dijkstra_loop(product, prod_accep):
-    #print 'accept node check %s' %(str(prod_accep))
+    #print('accept node check %s' %(str(prod_accep)))
     paths = {}
     costs = {}
     accept_pre_set = product.accept_predecessors(prod_accep)
@@ -169,20 +169,20 @@ def dijkstra_loop(product, prod_accep):
 
 
 def compute_path_from_pre(pre, target):
-    #print 'pre: %s with size %i' %(pre, len(pre))
+    #print('pre: %s with size %i' %(pre, len(pre)))
     n = target
     path = [n]
     while n in pre:
-        #print 'before append'
-        #print 'now at node %s' %str(n)
+        #print('before append'
+        #print('now at node %s' %str(n))
         pn_list = pre[n]
-        #print 'its pre_list %s' %str(pn_list)
+        #print('its pre_list %s' %str(pn_list))
         if not pn_list:
             break
         pn = pn_list[0]
-        #print '[0] of pn_list %s' %str(pn)
+        #print('[0] of pn_list %s' %str(pn))
         path.append(pn)
-        #print 'path: %s' %path
+        #print('path: %s' %path)
         n = pn
     path.reverse()
     return path
@@ -230,7 +230,7 @@ def validate_and_revise_after_ts_change(run, product, sense_info, com_info):
             for prod_node_to, weight in product.graph['ts'].fly_successors(f_ts_node):
                 succ_prod.add(prod_node_to)
             if t_ts_node not in succ_prod:
-                    print 'Oops, the current plan prefix contains invalid edges, need revision!'
+                    print('Oops, the current plan prefix contains invalid edges, need revision!')
                     new_prefix = dijkstra_revise_once(product, run.prefix, index)
                     break
         for (index, prod_edge) in enumerate(run.suf_prod_edges):
@@ -240,7 +240,7 @@ def validate_and_revise_after_ts_change(run, product, sense_info, com_info):
             for prod_node_to, weight in product.graph['ts'].fly_successors(f_ts_node):
                 succ_prod.add(prod_node_to)
             if t_ts_node not in succ_prod:
-                    print 'Oops, the current plan suffix contains invalid edges, need revision!'
+                    print('Oops, the current plan suffix contains invalid edges, need revision!')
                     new_prefix = dijkstra_revise_once(product, run.suffix, index)
                     break
         if new_prefix or new_suffix:
@@ -250,9 +250,9 @@ def validate_and_revise_after_ts_change(run, product, sense_info, com_info):
                 run.suffix = new_suffix
             run.prod_run_to_prod_edges(product)
             run.output(product)
-            print 'validate_and_revise_after_ts_change done in %.2fs' %(time.time()-start)
+            print('validate_and_revise_after_ts_change done in %.2fs' %(time.time()-start))
         else:
-            print 'local revision failed'
+            print('local revision failed')
             return False
 
 

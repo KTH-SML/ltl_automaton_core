@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from buchi import mission_to_buchi
-from product import ProdAut
+from ltl_automaton_planner.ltl_tools.buchi import mission_to_buchi
+from ltl_automaton_planner.ltl_tools.product import ProdAut
 #from ts import distance, reach_waypoint
-from discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history
+from ltl_automaton_planner.ltl_tools.discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history
 import networkx as nx
 
 class LTLPlanner(object):
@@ -37,26 +37,26 @@ class LTLPlanner(object):
             self.product.build_accept() 
             self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
             if self.run == None:
-                print '---No valid plan has been found!---'
-                print '---Check you FTS or task---'
+                print('---No valid plan has been found!---')
+                print('---Check you FTS or task---')
                 return 
-        #print '\n'
-        print '------------------------------'
-        print 'the prefix of plan **states**:'
-        print [n for n in self.run.line]
-        print 'the suffix of plan **states**:'
-        print [n for n in self.run.loop]
-        print '------------------------------'
-        print 'the prefix of plan **aps**:'
-        print [self.product.graph['ts'].node[n]['label'] for n in self.run.line]
-        print 'the suffix of plan **aps**:'
-        print [self.product.graph['ts'].node[n]['label'] for n in self.run.loop]
-        #print '\n'
-        print '------------------------------'
-        # print 'the prefix of plan **actions**:'
-        # print [n for n in self.run.pre_plan]
-        # print 'the suffix of plan **actions**:'
-        # print [n for n in self.run.suf_plan]
+        #print('\n'
+        print('------------------------------')
+        print('the prefix of plan **states**:')
+        print([n for n in self.run.line])
+        print('the suffix of plan **states**:')
+        print([n for n in self.run.loop])
+        print('------------------------------')
+        print('the prefix of plan **aps**:')
+        print([self.product.graph['ts'].nodes[n]['label'] for n in self.run.line])
+        print('the suffix of plan **aps**:')
+        print([self.product.graph['ts'].nodes[n]['label'] for n in self.run.loop])
+        #print('\n'
+        print('------------------------------')
+        # print('the prefix of plan **actions**:'
+        # print([n for n in self.run.pre_plan]
+        # print('the suffix of plan **actions**:'
+        # print([n for n in self.run.suf_plan]
         self.opt_log.append((self.Time, self.run.pre_plan, self.run.suf_plan, self.run.precost, self.run.sufcost, self.run.totalcost))
         self.last_time = self.Time
         self.acc_change = 0
@@ -74,9 +74,9 @@ class LTLPlanner(object):
         self.product.possible_states = self.product.get_possible_states(ts_node)
 
         if self.start_suffix():
-            print '=============================='
-            print '--- New suffix execution---'
-            print '=============================='               
+            print('==============================')
+            print('--- New suffix execution---')
+            print('==============================' )              
             self.product.possible_states = self.intersect_accept(self.product.possible_states, ts_node)
 
         # If possible states set in not empty, return true
@@ -93,14 +93,14 @@ class LTLPlanner(object):
 
 
     def start_suffix(self):
-        print "=================="
-        print "START SUFFIX TEST"
-        print "=================="
+        print("==================")
+        print("START SUFFIX TEST")
+        print("==================")
         if ((self.segment == 'loop') and (self.index == 0)):
-            print "RETURN TRUE"
+            print("RETURN TRUE")
             return True
         else:
-            print "RETURN FALSE"
+            print("RETURN FALSE")
             return False
 
     def find_next_move(self):
@@ -172,23 +172,15 @@ class LTLPlanner(object):
         new_run = improve_plan_given_history(self.product, self.trace)
 
         print('new_run = ' + str(new_run))
-        print '------------------------------'
-        print 'the prefix of plan **states**:'
-        print [n for n in new_run.line]
-        print 'the suffix of plan **states**:'
-        print [n for n in new_run.loop]
+        print('------------------------------')
+        print('the prefix of plan **states**:')
+        print([n for n in new_run.line])
+        print('the suffix of plan **states**:')
+        print([n for n in new_run.loop])
 
         if (new_run) and (new_run.pre_plan !=self.run.pre_plan[self.index:-1]):
             self.run = new_run
             self.index = 1
             self.segment = 'line'
             self.next_move = self.run.pre_plan[self.index]
-            print 'Plan adapted!'
-
-
-
-
-
-
-
-
+            print('Plan adapted!')

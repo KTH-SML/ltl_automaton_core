@@ -18,7 +18,7 @@ t_RPAREN = r"\)"
 t_ignore = " "
 
 def t_error(t):
-    print "Illegal character '%s'" % t.value[0]
+    print("Illegal character '%s'" % t.value[0])
 
 def get_lexer():
     return lex.lex()

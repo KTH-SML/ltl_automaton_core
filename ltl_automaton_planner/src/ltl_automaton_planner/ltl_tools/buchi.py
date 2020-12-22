@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ltl2ba import run_ltl2ba
-from promela import parse as parse_ltl, find_states, find_symbols
+from ltl_automaton_planner.ltl_tools.ltl2ba import run_ltl2ba
+from ltl_automaton_planner.ltl_tools.promela import parse as parse_ltl, find_states, find_symbols
 from ltl_automaton_planner.boolean_formulas.parser import parse as parse_guard
 from itertools import product as cartesian_product
 
@@ -28,7 +28,7 @@ def mission_to_buchi(hard_spec, soft_spec):
         buchi = buchi_from_ltl(soft_spec,'soft_buchi')
     elif (hard_spec and soft_spec):
         buchi = DuoBA_from_ltls(hard_spec, soft_spec)
-    print 'full Buchi constructed with %d states and %s transitions' %(len(buchi.nodes()), len(buchi.edges()))         
+    print('full Buchi constructed with %d states and %s transitions' %(len(buchi.nodes()), len(buchi.edges())))      
     return buchi
 
 def DuoBA_from_ltls(hard_spec, soft_spec):
@@ -72,7 +72,7 @@ def DuoBA_from_ltls(hard_spec, soft_spec):
     return DuoBA
 
 def check_duo_attr(DuoBA, node):
-    return DuoBA.node[node]['hard'], DuoBA.node[node]['soft'], DuoBA.node[node]['level']
+    return DuoBA.nodes[node]['hard'], DuoBA.nodes[node]['soft'], DuoBA.nodes[node]['level']
 
 def check_label_for_buchi_edge(buchi, label, f_buchi_node, t_buchi_node):
     buchi_type = buchi.graph['type']

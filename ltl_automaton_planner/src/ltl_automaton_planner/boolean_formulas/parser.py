@@ -1,4 +1,4 @@
-from lexer import get_lexer
+from ltl_automaton_planner.boolean_formulas.lexer import get_lexer
 import itertools
 
 

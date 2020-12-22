@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import roslib
 import numpy
-import Queue
 import rospy
 import sys
 import importlib
@@ -91,8 +90,8 @@ class MainPlanner(object):
         #-------------------
         # Get TS from param
         transition_system_textfile = rospy.get_param('transition_system_textfile')
-        self.transition_system = yaml.load(transition_system_textfile)
-        print self.transition_system
+        self.transition_system = yaml.load(transition_system_textfile, Loader=yaml.FullLoader)
+        print(self.transition_system)
 
         # Parameter if initial TS is set from agent callback or from TS config file
         self.initial_ts_state_from_agent = rospy.get_param('~initial_ts_state_from_agent', False)

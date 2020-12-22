@@ -1,11 +1,10 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from os.path import abspath, dirname, join
 from subprocess import check_output
 from codecs import getdecoder
 from argparse import ArgumentParser
-from promela import Parser
+from ltl_automaton_planner.ltl_tools.promela import Parser
 
 def run_ltl2ba(formula):
     script_dir = dirname(abspath(__file__))
@@ -30,4 +29,4 @@ if __name__ == "__main__":
     ltl2ba_output = run_ltl2ba(args.LTL)
     parser = Parser(ltl2ba_output)
     transitions = parser.parse()
-    print transitions
+    print(transitions)

@@ -172,7 +172,7 @@ class IRLPlugin(object):
         ac_c = 0
         ac_d = 0
         for i in range(len(path)-1):
-            print self.ltl_planner.product[path[i]][path[i+1]]['soft_task_dist']
+            print(self.ltl_planner.product[path[i]][path[i+1]]['soft_task_dist'])
             ac_d += self.ltl_planner.product[path[i]][path[i+1]]['soft_task_dist']
             ac_c += self.ltl_planner.product[path[i]][path[i+1]]['transition_cost']
         return [ac_c, ac_d]
@@ -198,12 +198,12 @@ class IRLPlugin(object):
         return score
 
     def irl_jit(self, posb_runs):
-        print '------------------------------'
-        print 'Find beta via IRL starts'
+        print('------------------------------')
+        print('Find beta via IRL starts')
         opt_path = self.select_least_violating_run(posb_runs)
         opt_cost = self.compute_path_cost(opt_path)
         opt_ac_d = opt_cost[1]
-        print opt_ac_d
+        print(opt_ac_d)
         beta_seq = [] 
         beta = 100.0
         beta_p = self.beta
@@ -215,36 +215,36 @@ class IRLPlugin(object):
         while ((abs(beta_p-beta)>0.3) and (count <20)):
             if beta_p < 0:
                 break
-            print 'Iteration --%d--'%count
+            print('Iteration --%d--'%count)
             beta = beta_p
             marg_path = self.margin_opt_path(opt_path, beta)
             marg_cost = self.compute_path_cost(marg_path)
             marg_ac_d = marg_cost[1]
-            print '(opt_ac_d-marg_ac_d)', opt_ac_d-marg_ac_d
+            print('(opt_ac_d-marg_ac_d)', opt_ac_d-marg_ac_d)
 
             gradient = lam*(opt_ac_d-marg_ac_d)
             if count <10:
                 beta_p = beta - (alpha)*gradient
             else:
                 beta_p = beta - (alpha/(count+1))*gradient
-            print 'gradient:%.2f and beta_dif:%.2f' %(gradient, beta-beta_p)
+            print('gradient:%.2f and beta_dif:%.2f' %(gradient, beta-beta_p))
             count += 1
-            print 'old beta: %.2f ||| new beta: %.2f' %(beta, beta_p)
+            print('old beta: %.2f ||| new beta: %.2f' %(beta, beta_p))
             score = self.opt_path_match(opt_path, marg_path)
             beta_seq.append(beta_p)
             match_score.append(score)
-        print '--------------------'
-        print 'In total **%d** para_dijkstra run ||| beta sequence: %s' %(count, str(beta_seq))
-        print 'Opt_path length: %d, match score sequence: %s' %(len(opt_path), str(match_score))
-        print '--------------------'
+        print('--------------------')
+        print('In total **%d** para_dijkstra run ||| beta sequence: %s' %(count, str(beta_seq)))
+        print('Opt_path length: %d, match score sequence: %s' %(len(opt_path), str(match_score)))
+        print('--------------------')
         if beta <0:
             beta = 0
         self.set_beta(beta)
         # Replan
         self.ltl_planner.optimal(style='ready')
         opt_suffix = list(self.run.suffix)
-        print 'opt_suffix updated to %s' %str(opt_suffix)
-        print '-----------------'
+        print('opt_suffix updated to %s' %str(opt_suffix))
+        print('-----------------')
         return beta_seq, match_score
 
     def compute_path_ac_d(self, path):

@@ -49,7 +49,7 @@ class TrapDetectionPlugin(object):
 
         # Check if TS state is trap
         is_trap = self.is_trap(ts_state)
-        print is_trap
+        print(is_trap)
 
         # TS state is trap
         if is_trap == 1:

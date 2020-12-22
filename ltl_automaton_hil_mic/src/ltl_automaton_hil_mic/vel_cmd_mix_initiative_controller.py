@@ -154,7 +154,7 @@ class VelCmdMixer(object):
 
             # if IT'S A TRAP! (insert Amiral Ackbar meme)
             if check_for_trap_res.is_connected and check_for_trap_res.is_trap:
-                print "WE ARE IN STATE %s AND STATE %s IS TRAP!!!" % (self.curr_ts_state.states, check_for_trap_req.ts_state.states)
+                print("WE ARE IN STATE %s AND STATE %s IS TRAP!!!" % (self.curr_ts_state.states, check_for_trap_req.ts_state.states))
                 # Return distance to closest region
                 return closest_reg.metric
 
@@ -195,11 +195,11 @@ class VelCmdMixer(object):
             # If distance to trap returns false, no trap is close, use human input
             else:
                 #if no obstacle is close, use human command
-                print 'No trap states are close'
+                print('No trap states are close')
                 teleop_vel_cmd = self.bound_vel_cmd(teleop_vel_cmd)
                 mix_control = teleop_vel_cmd
         else:
-            print 'Human inputs below deadband. Autonomous controller used.'
+            print('Human inputs below deadband. Autonomous controller used.')
             mix_control = planner_vel_cmd
 
         return mix_control
@@ -210,7 +210,7 @@ class VelCmdMixer(object):
     def smooth_mix(self, tele_control, navi_control, dist_to_trap, ds, epsilon):
         # Compute gain using epsilon, dist to trap and ds
         gain = self.rho(dist_to_trap-ds)/(self.rho(dist_to_trap-ds)+self.rho(epsilon +self.ds-dist_to_trap))
-        print 'human-in-the-loop gain is ' + str(gain)
+        print('human-in-the-loop gain is ' + str(gain))
 
         # Mix velocity commands by using previously calculated gain
         mix_vel_cmd = Twist()
