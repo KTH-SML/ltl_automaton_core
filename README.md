@@ -1,7 +1,7 @@
 # ltl_automaton_core
 
 ## Overview
-This package provides an implementation of a LTL (Linear Temporal Logic) planner based on automaton graph.
+This metapackage provides an implementation of a LTL (Linear Temporal Logic) planner based on automaton graph.
 
 ### License
 TODO
@@ -56,12 +56,13 @@ roslaunch ltl_automaton_planner ltl_planner_example.launch
 
 It will launch a planner using the formula provided by the config file *ltl_automaton_planner/config/example_ltl_formula* and using the transition system specified in *ltl_automaton_planner/config/example_ts*.
 
-## Config files
-TODO
+## Packages
+This metapackage is composed of the following packages.
 
-## Launch files
-TODO
+- **[ltl_automaton_planner](/ltl_automaton_planner)**: Provides the LTL planner node. The node uses a transition system and a LTL formula to generate a plan and action sequence, and update them according to agent state.
 
-## Nodes
-### planner_node.py
-TODO
+- **[ltl_automaton_msgs](/ltl_automaton_msgs)**: A message definition packages for the LTL automaton packages.
+
+- **[ltl_automaton_std_transition_systems](/ltl_automaton_std_transition_systems)**: A set of state monitors for standard transition systems (2D regions, ...).
+
+- **[ltl_automaton_hil_mic](/ltl_automaton_hil_mic)**: An implementation of a Human-In-the-Loop mix initiative controller for agents using the LTL planner.
