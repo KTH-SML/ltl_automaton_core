@@ -70,7 +70,7 @@ class MainPlanner(object):
 
     def init_params(self):
         #Get parameters from parameter server
-        self.agent_name = rospy.get_param('agent_name')
+        self.agent_name = rospy.get_param('agent_name', "agent")
         self.initial_beta = rospy.get_param('initial_beta', 1000)
         self.gamma = rospy.get_param('gamma', 10)
 
@@ -224,7 +224,7 @@ class MainPlanner(object):
         #-------------------------
         if (state in self.robot_model.product.nodes()):
 
-            # If state is different from previous state or parameter allow for repeating state in plan
+            # If state is different from previous state or if parameter allows for repeating state in plan
             if (not (state == self.ltl_planner.curr_ts_state)) or (self.allow_repeating_state_in_plan):
 
                 # Update current state
