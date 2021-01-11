@@ -50,7 +50,7 @@ def generate_regions_and_actions(region_definition_dict):
         station_quaternion = quaternion_from_euler(0, 0, station_dict['origin']['yaw']) # Get quaternion from yaw angle
         region_2d_pose_ts_dict['actions'].update({'goto_s'+str(i): {'type': 'move',
                                                                     'weight': 10,
-                                                                    'attr': {'pose': [[station_dict['origin']['x'], station_dict['origin']['y'], 0], station_quaternion.tolist()]}}})
+                                                                    'attr': {'region': 's'+str(i), 'pose': [[station_dict['origin']['x'], station_dict['origin']['y'], 0], station_quaternion.tolist()]}}})
 
 
     # Create cell regions
@@ -77,7 +77,7 @@ def generate_regions_and_actions(region_definition_dict):
             # Add action
             region_2d_pose_ts_dict['actions'].update({'goto_r'+str(cell_iter): {'type': 'move',
                                                                                 'weight': 10,
-                                                                                'attr': {'pose': [[ x_coord, y_coord, 0], [0, 0, 0, 1]]}}})
+                                                                                'attr': {'region': 'r'+str(i), 'pose': [[ x_coord, y_coord, 0], [0, 0, 0, 1]]}}})
 
             # Check if station is connected
             # Go through all regions

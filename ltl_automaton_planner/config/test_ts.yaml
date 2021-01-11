@@ -56,16 +56,19 @@ actions:
         type: "move"
         weight: 10
         attr:
+            region: r1
             pose: [[0,0,0], [0,0,0,1]]
     goto_r2:
         type: "move"
         weight: 10
         attr:
+            region: r2
             pose: [[1,1,0], [0,0,0,1]]
     goto_r3:
         type: "move"
         weight: 10
         attr:
+            region: r3
             pose: [[2,1,0], [0,0,0,1]]
     pick:
         type: "nexus_pick"
