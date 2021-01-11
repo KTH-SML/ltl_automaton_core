@@ -53,18 +53,17 @@ Planner node. Build a product graph from a given transition system and LTL formu
 
 	Hard task to be carried out by the agent, is required. Should be written using syntax from [LTL2BA](http://www.lsv.fr/~gastin/ltl2ba/). It is advised to use a YAML file to define this parameter as some characters in LTL syntax might cause trouble with XML in launch files. More information on the syntax here (TODO).
 
-
-- `/soft_task` (string)
+- `soft_task` (string)
 
 	Soft task to be carried out by the agent, is optional. Soft tasks are enforced or not by the planner depending on the beta value. Should be written using syntax from [LTL2BA](http://www.lsv.fr/~gastin/ltl2ba/). It is advised to use a YAML file to define this parameter as some characters in LTL syntax might cause trouble with XML in launch files. More information on the syntax here (TODO).
 
 - `initial_beta` (double, default: 1000)
 
-	Affect how the soft task is enforced by the planner. A higher value TODO
+	Affect how the soft task is enforced by the planner. A higher value will help enforcing the soft task while a lower value can leave the soft task unenforced by the plan. The given value is only the initial one since beta can vary.
 
 - `gamma` (double, default: 10)
 
-	TODO
+	Suffix weighting parameter. A higher value will increase the suffix cost and therefor minimize suffix word length.
 
 - `transition_system_textfile` (string)
 
