@@ -41,7 +41,7 @@ class ProdAut(DiGraph):
 
         print('full product constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
 
-    # Build required for IRL (TODO: check exactly how this works)
+    # Build required for IRL
     def build_full_margin(self, opt_path):
         opt_edges = None
         if len(opt_path) >= 2:

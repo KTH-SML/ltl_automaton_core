@@ -87,15 +87,15 @@ Planner node. Build a product graph from a given transition system and LTL formu
     If true, will replan when receiving a TS state that is not the next one in the plan (output word) using the TS state as initial state.
     
 #### LTL formula
-For more information on LTL task formulation and syntax, please take a look at the [wiki page](wiki/LTL-Formula)
+For more information on LTL task formulation and syntax, please take a look at the [wiki page](../../../wiki/LTL-Formula)
 
 #### Transition system definition
 The final transition system is built from one or more action models. Those action models are also transition systems and doing their cartesian graph product gives the final transition system.
 
 As the final transition system, each individual action model transition system is discrete, finite, and can be deterministic or not. The input on each transition is an action that can be carried out by the agent.
 
-More information about the transition system can be found in the corresponding [wiki page](wiki/Transition-System-Definition)
+More information about the transition system can be found in the corresponding [wiki page](../../../wiki/Transition-System-Definition)
 
 #### Plugins
-A plugin system allows for integrating more feature to the planner node (notably used by the Human-In-the-Loop mix jnitiative controller). Details on the plugin can be found on the [wiki page](wiki/Planner-Plugin)
+A plugin system allows for integrating more feature to the planner node (notably used by the Human-In-the-Loop mix jnitiative controller). Details on the plugin can be found on the [wiki page](../../../wiki/Planner-Plugin)
 
