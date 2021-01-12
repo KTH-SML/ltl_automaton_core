@@ -92,10 +92,10 @@ class Region2DPoseStateMonitor(object):
                     return True
                 else:
                     # Check all connected squares
-                    connected_stations_list = filter(lambda elem: elem in self.squares,
+                    connected_square_list = filter(lambda elem: elem in self.squares,
                                                      self.region_dict["nodes"][self.state]["connected_to"].keys())
 
-                    if self.update_state(pose, self.region_dict["nodes"][self.state]["connected_to"].keys()):
+                    if self.update_state(pose, connected_square_list):
                         return True
 
 
