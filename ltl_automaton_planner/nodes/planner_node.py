@@ -30,8 +30,8 @@ def show_automaton(automaton_graph):
     pos=nx.circular_layout(automaton_graph)
     nx.draw(automaton_graph, pos)
     nx.draw_networkx_labels(automaton_graph, pos)
-    edge_labels = nx.get_edge_attributes(automaton_graph, 'weight')
-    nx.draw_networkx_edge_labels(automaton_graph, pos, labels = edge_labels)
+    edge_labels = nx.get_edge_attributes(automaton_graph, 'action')
+    nx.draw_networkx_edge_labels(automaton_graph, pos, edge_labels = edge_labels)
     plt.show()
     return
 
@@ -91,7 +91,7 @@ class MainPlanner(object):
         # Get TS from param
         transition_system_textfile = rospy.get_param('transition_system_textfile')
         self.transition_system = yaml.load(transition_system_textfile, Loader=yaml.FullLoader)
-        print(self.transition_system)
+        #print(self.transition_system)
 
         # Parameter if initial TS is set from agent callback or from TS config file
         self.initial_ts_state_from_agent = rospy.get_param('~initial_ts_state_from_agent', False)
@@ -169,7 +169,6 @@ class MainPlanner(object):
         self.robot_model = TSModel(state_models)
         self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
         self.ltl_planner.optimal()
-
         # Get first value from set
         self.ltl_planner.curr_ts_state = list(self.ltl_planner.product.graph['ts'].graph['initial'])[0]
 

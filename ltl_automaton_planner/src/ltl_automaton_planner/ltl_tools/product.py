@@ -26,7 +26,7 @@ class ProdAut(DiGraph):
                             t_prod_node = self.composition(t_ts_node, t_buchi_node)
                             # Get label from TS node, and weight and action from TS edge
                             label = self.graph['ts'].nodes[f_ts_node]['label']
-                            cost = self.graph['ts'][f_ts_node][t_ts_node]['weight']
+                            cost = self.graph['ts'][f_ts_node][t_ts_node]['weight'] #action weight
                             action = self.graph['ts'][f_ts_node][t_ts_node]['action']
                             # Check if label is compatible with büchi (black magic for now, need to understand this better)
                             truth, dist = check_label_for_buchi_edge(self.graph['buchi'], label, f_buchi_node, t_buchi_node)
@@ -55,7 +55,7 @@ class ProdAut(DiGraph):
                             t_prod_node = self.composition(t_ts_node, t_buchi_node)
 
                             label = self.graph['ts'].nodes[f_ts_node]['label']
-                            cost = self.graph['ts'][f_ts_node][t_ts_node]['weight']
+                            cost = self.graph['ts'][f_ts_node][t_ts_node]['weight'] #action weight
                             truth, dist = check_label_for_buchi_edge(self.graph['buchi'], label, f_buchi_node, t_buchi_node)
                             total_weight = cost + self.graph['beta']*dist + 1
 
@@ -252,7 +252,7 @@ class ProdAut_Run(object):
             self.pre_plan.append( product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] )
 
             # Add the 'weight' label between the two consectuve TS nodes as the cost of the prefix plan
-            self.pre_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # cost 
+            self.pre_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # action cost 
 
         # Initialize suffix plan and cost
         self.suf_plan = list()
@@ -265,7 +265,7 @@ class ProdAut_Run(object):
             self.suf_plan.append( product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'] )
 
             # Add 'weight' label between the consecutive TS nodes of the suffix plan to the cost
-            self.suf_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # cost
+            self.suf_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # action cost
 
         print('pre_plan: ' + str(self.pre_plan))
         print('suf_plan: ' + str(self.suf_plan))

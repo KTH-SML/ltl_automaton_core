@@ -54,7 +54,7 @@ class GraphProduct(DiGraph):
         self.do_product()
 
     def composition(self, state_a, state_b):
-        prod_node = (state_a, state_b)
+        prod_node = state_a + state_b
         if not self.has_node(prod_node):
             new_label = self.model_a.nodes[state_a]['label'].union(self.model_b.nodes[state_b]['label'])
             self.add_node(prod_node, label=new_label, marker='unvisited')
@@ -62,6 +62,18 @@ class GraphProduct(DiGraph):
             if (state_a in self.model_a.graph['initial']) and (state_b in self.model_b.graph['initial']):
                 self.graph['initial'].add(prod_node)
         return prod_node
+
+    def is_action_allowed(self, action_guard, ts_label):
+        # Check action guard against the node label
+        print("testing action guard "+str(action_guard)+" against ts label "+str(ts_label))
+        guard_expr = parse_guard(action_guard)
+        if guard_expr.check(ts_label):
+            print("True")
+            return True
+        else:
+            print("False")
+            return False
+
 
     #Product of two models a & b
     def do_product(self):
@@ -72,18 +84,23 @@ class GraphProduct(DiGraph):
                 prod_node = self.composition(a_state, b_state)
 
                 for b_state_to in self.model_b.successors(b_state):
-                    #=== TODO: ADD A CHECK FOR IF ACTION IS ALLOWED ON OTHER REGION STATE ===
                     prod_node_to = self.composition(a_state, b_state_to)
                     #Add edge using weight and action label from the state model
-                    self.add_edge(prod_node, prod_node_to,
-                                  weight=self.model_b[b_state][b_state_to]['weight'],
-                                  action=self.model_b[b_state][b_state_to]['action'],
-                                  marker='visited')
+                    print("Link from node "+str(prod_node)+" to node "+str(prod_node_to))
+                    if self.is_action_allowed(self.model_b[b_state][b_state_to]['guard'], self.model_a.nodes[a_state]['label']):
+                        self.add_edge(prod_node, prod_node_to,
+                                      action=self.model_b[b_state][b_state_to]['action'],
+                                      guard=self.model_b[b_state][b_state_to]['guard'],
+                                      weight=self.model_b[b_state][b_state_to]['weight'],
+                                      marker='visited')
 
                 for a_state_to in self.model_a.successors(a_state):
                     prod_node_to = self.composition(a_state_to, b_state)
                     #Add edge using weight and action label from the state model
-                    self.add_edge(prod_node, prod_node_to,
-                                  weight=self.model_a[a_state][a_state_to]['weight'],
-                                  action=self.model_a[a_state][a_state_to]['action'],
-                                  marker='visited')
+                    print("Link from node "+str(prod_node)+" to node "+str(prod_node_to))
+                    if self.is_action_allowed(self.model_a[a_state][a_state_to]['guard'], self.model_b.nodes[b_state]['label']):
+                        self.add_edge(prod_node, prod_node_to,
+                                      action=self.model_a[a_state][a_state_to]['action'],
+                                      guard=self.model_a[a_state][a_state_to]['guard'],
+                                      weight=self.model_a[a_state][a_state_to]['weight'],
+                                      marker='visited')

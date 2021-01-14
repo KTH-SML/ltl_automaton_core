@@ -7,8 +7,20 @@
 #   2d_point_region (2D point [x, y] without orientation)
 #   nexus_load
 
-state_dim: ["2d_pose_region", "nexus_load"]
+state_dim: ["2d_pose_region", "nexus_load", "nexus_battery"]
 state_models:
+    nexus_battery:
+        ts_type: "battery"
+        initial: "charged"
+        nodes:
+            charged:
+                connected_to:
+                    charged: "idle"
+                    discharged: "discharge"
+            discharged:
+                connected_to:
+                    charged: "charge"
+                    discharged: "idle"
     2d_pose_region:
         ts_type: "2d_pose_region"
         initial: "r1"
@@ -49,32 +61,48 @@ state_models:
                     loaded: "pick"
             loaded:
                 connected_to:
-                    unloaded: "drop"
+                    unloaded: "drop"             
 
 actions:
     goto_r1:
         type: "move"
         weight: 10
+        guard: "1"
         attr:
             region: r1
             pose: [[0,0,0], [0,0,0,1]]
     goto_r2:
         type: "move"
         weight: 10
+        guard: "1"
         attr:
             region: r2
             pose: [[1,1,0], [0,0,0,1]]
     goto_r3:
         type: "move"
         weight: 10
+        guard: "1"
         attr:
             region: r3
             pose: [[2,1,0], [0,0,0,1]]
     pick:
         type: "nexus_pick"
         weight: 10
+        guard: "r3 || r2 || charged"
     drop:
         type: "nexus_drop"
         weight: 10
-             
+        guard: "r3 || r2 || charged"
+    charge:
+        type: "battery_charge"
+        weight: 10
+        guard: "r1 && (loaded || unloaded)"    
+    discharge:
+        type: "battery_discharge"
+        weight: 10
+        guard: "1"
+    idle:
+        type: "battery_idle"
+        weight: 10
+        guard: "1"
 

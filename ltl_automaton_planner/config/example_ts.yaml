@@ -55,26 +55,31 @@ actions:
     goto_r1:
         type: "move"
         weight: 10
+        guard: "1"
         attr:
             region: r1
             pose: [[0,0,0], [0,0,0,1]]
     goto_r2:
         type: "move"
         weight: 10
+        guard: "1"
         attr:
             region: r2
             pose: [[1,1,0], [0,0,0,1]]
     goto_r3:
         type: "move"
         weight: 10
+        guard: "1"
         attr:
             region: r3
             pose: [[2,1,0], [0,0,0,1]]
     pick:
         type: "turtlebot_pick"
+        guard: "r2"
         weight: 10
     drop:
         type: "turtlebot_drop"
+        guard: "r2"
         weight: 10
              
 

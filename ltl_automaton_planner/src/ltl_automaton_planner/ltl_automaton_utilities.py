@@ -32,14 +32,14 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
         # Create all nodes
         #------------------
         for node in state_model_dict['nodes']:
-            state_model.add_node(str(node), label=set([str(node)]))
+            state_model.add_node(tuple([node]), label=set([str(node)]))
         # If no initial states in arguments, use initial state from TS dict
         if not initial_states_dict:
-            state_model.graph['initial']=set([state_model_dict['initial']])
+            state_model.graph['initial']=set([tuple([state_model_dict['initial']])])
         else:
             print("---")
             print(initial_states_dict[model_dim])
-            state_model.graph['initial']=set([initial_states_dict[model_dim]])
+            state_model.graph['initial']=set([tuple([initial_states_dict[model_dim]])])
         #----------------------------------
         # Connect previously created nodes
         #----------------------------------
@@ -48,16 +48,17 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
             # Go through all connected node
             for connected_node in state_model_dict['nodes'][node]['connected_to']:
                 # Add edge between node and connected node
-                state_model.add_edge(str(node), str(connected_node),
-                                     # Get associated action from "connected_to" tag of state node
-                                     action=TS_dict['state_models'][model_dim]["nodes"][node]['connected_to'][connected_node],
-                                     # Use action to retrieve weight from action dictionnary
-                                     weight=TS_dict['actions'][TS_dict['state_models'][model_dim]["nodes"][node]['connected_to'][connected_node]]["weight"])
+                # Get associated action from "connected_to" tag of state node
+                act = TS_dict['state_models'][model_dim]["nodes"][node]['connected_to'][connected_node]
+                # Use action to retrieve weight and guard from action dictionnary
+                act_guard = TS_dict['actions'][act]['guard']
+                act_weight = TS_dict['actions'][act]['weight']
+                state_model.add_edge(tuple([node]), tuple([connected_node]), action = act, guard = act_guard, weight = act_weight)
         #-------------------------
         # Add state model to list
         #-------------------------
         state_models.append(state_model)
-        print(state_model.graph['initial'])
+        print(state_model.nodes())
 
     return state_models
 

@@ -1,2 +1,2 @@
-hard_task: "([]<> (r1 && loaded)) && ([] (r1 ->Xunloaded)) && ([]<> r5) && ([]!r3)"
+hard_task: "([]<> r1) && ([]<> r2)"
 soft_task: ""
