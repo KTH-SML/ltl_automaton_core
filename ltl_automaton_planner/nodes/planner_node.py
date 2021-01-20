@@ -175,7 +175,7 @@ class MainPlanner(object):
         # initialize storage of set of possible runs in product
         self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
-        #show_automaton(self.robot_model.product)
+        show_automaton(self.robot_model.product)
         #show_automaton(self.ltl_planner.product.graph['buchi'])
         #show_automaton(self.ltl_planner.product)
 

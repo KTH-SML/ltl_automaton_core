@@ -65,13 +65,10 @@ class GraphProduct(DiGraph):
 
     def is_action_allowed(self, action_guard, ts_label):
         # Check action guard against the node label
-        print("testing action guard "+str(action_guard)+" against ts label "+str(ts_label))
         guard_expr = parse_guard(action_guard)
         if guard_expr.check(ts_label):
-            print("True")
             return True
         else:
-            print("False")
             return False
 
 
@@ -86,7 +83,6 @@ class GraphProduct(DiGraph):
                 for b_state_to in self.model_b.successors(b_state):
                     prod_node_to = self.composition(a_state, b_state_to)
                     #Add edge using weight and action label from the state model
-                    print("Link from node "+str(prod_node)+" to node "+str(prod_node_to))
                     if self.is_action_allowed(self.model_b[b_state][b_state_to]['guard'], self.model_a.nodes[a_state]['label']):
                         self.add_edge(prod_node, prod_node_to,
                                       action=self.model_b[b_state][b_state_to]['action'],
@@ -97,7 +93,6 @@ class GraphProduct(DiGraph):
                 for a_state_to in self.model_a.successors(a_state):
                     prod_node_to = self.composition(a_state_to, b_state)
                     #Add edge using weight and action label from the state model
-                    print("Link from node "+str(prod_node)+" to node "+str(prod_node_to))
                     if self.is_action_allowed(self.model_a[a_state][a_state_to]['guard'], self.model_b.nodes[b_state]['label']):
                         self.add_edge(prod_node, prod_node_to,
                                       action=self.model_a[a_state][a_state_to]['action'],
