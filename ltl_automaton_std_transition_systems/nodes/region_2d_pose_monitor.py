@@ -32,11 +32,11 @@ class Region2DPoseStateMonitor(object):
         self.region_dict = import_ts_from_file(rospy.get_param('transition_system_textfile'))['state_models']['2d_pose_region']
 
         # Generate list of station regions
-        self.stations = filter(lambda elem: self.region_dict["nodes"][elem]["attr"]["type"] == "station",
-                               self.region_dict["nodes"].keys())
+        self.stations = list(filter(lambda elem: self.region_dict["nodes"][elem]["attr"]["type"] == "station",
+                               self.region_dict["nodes"].keys()))
         # Generate list of square regions
-        self.squares = filter(lambda elem: self.region_dict["nodes"][elem]["attr"]["type"] == "square",
-                              self.region_dict["nodes"].keys())
+        self.squares = list(filter(lambda elem: self.region_dict["nodes"][elem]["attr"]["type"] == "square",
+                              self.region_dict["nodes"].keys()))
 
     #----------------------------------------
     # Setup subscriber to agent localization
@@ -78,8 +78,8 @@ class Region2DPoseStateMonitor(object):
             # stations are overlaid on top of squares and should be check even if agent has not left square
             else:
                 # Get list of connected station and check if in it
-                connected_stations_list = filter(lambda elem: elem in self.stations,
-                                                 self.region_dict["nodes"][self.state]["connected_to"].keys())
+                connected_stations_list = list(filter(lambda elem: elem in self.stations,
+                                                 self.region_dict["nodes"][self.state]["connected_to"].keys()))
                 # Check if agent is in the stations
                 if self.update_state(pose, connected_stations_list):
                     return True
@@ -92,21 +92,23 @@ class Region2DPoseStateMonitor(object):
                     return True
                 else:
                     # Check all connected squares
-                    connected_square_list = filter(lambda elem: elem in self.squares,
-                                                     self.region_dict["nodes"][self.state]["connected_to"].keys())
+                    connected_square_list = list(filter(lambda elem: elem in self.squares,
+                                                     self.region_dict["nodes"][self.state]["connected_to"].keys()))
+                    #print("Connected cell list is ")
+                    #print(connected_square_list)
 
                     if self.update_state(pose, connected_square_list):
                         return True
 
 
         # If not found in connected regions or no previous region, check all regions
-        #print "previous state does not exist or agent not in connected regions"
+        #print("previous state does not exist or agent not in connected regions")
         if self.update_state(pose, self.region_dict["nodes"].keys()):
             return True
 
         # Return false if region could not be found from pose
         return False
-        #print "agent not found"
+        #print("agent not found")
 
     #----------------------------
     # Check agent closest region
@@ -209,7 +211,7 @@ class Region2DPoseStateMonitor(object):
     def is_in_station(self, pose, station, dist_hysteresis = 0, angle_hysteresis = 0):
         station_pose = self.region_dict["nodes"][station]["attr"]["pose"]
         station_radius = self.region_dict["nodes"][station]["attr"]["radius"]
-        angle_tolerance = self.region_dict["nodes"][station]["attr"]["angle_tolerance"]
+        angle_tolerance = self.region_dict["nodes"][station]["attr"]["angle_threshold"]
 
         dist = self.dist_2d_err(pose, station_pose)
         angle = self.yaw_angle_err(pose, station_pose)
@@ -249,10 +251,10 @@ class Region2DPoseStateMonitor(object):
                                                     pose.orientation.w])
         return abs(yaw - center_pose[1][0])
 
-    #-------------------------------------
-    #        callback function for
-    #      the pose of each obstacle
-    #-------------------------------------
+    #--------------------------------------
+    # Callback function for the agent pose
+    # Can handle any type of pose message
+    #--------------------------------------
     def omnipose_callback(self, anymsg):
         # Callback is allowed to subscribe with any message, so it can subscribe to 
         # both Pose and PoseWithCovarianceStamped message types.
