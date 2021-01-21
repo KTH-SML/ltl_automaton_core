@@ -5,7 +5,7 @@ An LTL (Linear Temporal Logic) planner implementation based on LTL2BA and LTL au
 
 A non-deterministic state graph, called product graph, is generated from the product of the Buchi automaton and the action model. This product graph is used to track possible agent state and generate a plan (output word) and action sequence (input word) for the agent.
 
-For more information, please take a look at the [wiki](wiki)
+For more information, please take a look at the [wiki](../../../wiki)
 
 ## Config files
 - **example_ltl_formula.yaml** Example of LTL formula with both hard and soft task.
