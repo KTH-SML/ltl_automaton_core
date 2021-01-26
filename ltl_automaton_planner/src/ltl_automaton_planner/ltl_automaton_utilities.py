@@ -64,14 +64,16 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
 
 def handle_ts_state_msg(ts_state_msg):
     # Extract TS state from request message
-    # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
+    # If only 1-dimensional state, state is directly a string
+    #   in this case create tuple from the state from message array without the function tuple() 
+    #   to avoid conversion from string to tuple of char
     if not (len(ts_state_msg.states) == len(ts_state_msg.state_dimension_names)):
         raise ValueError("Received TS states don't match TS state models: "+str(len(ts_state_msg.states))+" initial states and "+str(len(ts_state_msg.state_dimension_names))+" state models")
     elif len(ts_state_msg.states) > 1:
         ts_state = tuple(ts_state_msg.states)
         return ts_state
     elif len(ts_state_msg.states) == 1:
-        ts_state = ts_state_msg.states[0]
+        ts_state = (ts_state_msg.states[0],)
         return ts_state
     else:
         raise ValueError("received empty TS state")

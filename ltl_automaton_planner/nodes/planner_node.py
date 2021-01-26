@@ -13,7 +13,7 @@ from ltl_automaton_planner.ltl_tools.ltl_planner import LTLPlanner
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, import_ts_from_file
+from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, import_ts_from_file, handle_ts_state_msg
 
 #Import LTL automaton message definitions
 from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray
@@ -34,22 +34,6 @@ def show_automaton(automaton_graph):
     nx.draw_networkx_edge_labels(automaton_graph, pos, edge_labels = edge_labels)
     plt.show()
     return
-
-def handle_ts_state_msg(ts_state_msg):
-    # Extract TS state from request message
-    # If only 1-dimensional state, TS graph won't use tuple, just extract the state from message array
-    if not (len(ts_state_msg.states) == len(ts_state_msg.state_dimension_names)):
-        raise ValueError("Received TS states don't match TS state models: "+str(len(ts_state_msg.states))+" initial states and "+str(len(ts_state_msg.state_dimension_names))+" state models")
-    elif len(ts_state_msg.states) > 1:
-        ts_state = tuple(ts_state_msg.states)
-        return ts_state
-    elif len(ts_state_msg.states) == 1:
-        ts_state = ts_state_msg.states[0]
-        return ts_state
-    else:
-        raise ValueError("received empty TS state")
-
-    #TODO Add check for message malformed (not corresponding fields)
 
 class MainPlanner(object):
     def __init__(self):
@@ -175,7 +159,7 @@ class MainPlanner(object):
         # initialize storage of set of possible runs in product
         self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
-        show_automaton(self.robot_model.product)
+        #show_automaton(self.robot_model.product)
         #show_automaton(self.ltl_planner.product.graph['buchi'])
         #show_automaton(self.ltl_planner.product)
 
@@ -217,7 +201,7 @@ class MainPlanner(object):
     def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
         # Extract TS state from message
         state = handle_ts_state_msg(msg.ts_state)
-
+        
         #-------------------------
         # Check if state is in TS
         #-------------------------
