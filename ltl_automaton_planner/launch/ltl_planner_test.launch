@@ -7,6 +7,7 @@
   <param name="agent_name" type="string" value="$(arg agent_name)" />
   <!-- hard and soft task parameters -->
   <rosparam command="load" file="$(find ltl_automaton_planner)/config/test_ltl_formula.yaml" />
+  <param name="initial_beta" value="1000" />
   <!-- Transition system -->
   <param name="transition_system_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/test_ts.yaml" />
 

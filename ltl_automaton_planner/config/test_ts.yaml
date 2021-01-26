@@ -7,20 +7,8 @@
 #   2d_point_region (2D point [x, y] without orientation)
 #   nexus_load
 
-state_dim: ["2d_pose_region", "nexus_load", "nexus_battery"]
+state_dim: ["2d_pose_region", "nexus_load"]
 state_models:
-    nexus_battery:
-        ts_type: "battery"
-        initial: "charged"
-        nodes:
-            charged:
-                connected_to:
-                    charged: "idle"
-                    discharged: "discharge"
-            discharged:
-                connected_to:
-                    charged: "charge"
-                    discharged: "idle"
     2d_pose_region:
         ts_type: "2d_pose_region"
         initial: "r1"
@@ -32,26 +20,61 @@ state_models:
                     length: 1
                     hysteresis: 0.05
                 connected_to:
+                    r1: "goto_r1"
                     r2: "goto_r2"
-                    r3: "goto_r3"
+                    r4: "goto_r4"
             r2:
                 attr:
-                    type: "station"
-                    pose: [[1,1], [0]]
-                    radius: 0.1
-                    angle_threshold: 0.1
-                    dist_hysteresis: 0.03
-                    angle_hysteresis: 0.1
-                connected_to:
-                    r1: "goto_r1"
-            r3:
-                attr:
                     type: "square"
-                    pose: [[2,1], [0]]
+                    pose: [[-1,0], [0]]
                     length: 1
                     hysteresis: 0.05
                 connected_to:
                     r1: "goto_r1"
+                    r2: "goto_r2"
+                    r3: "goto_r3"
+                    r5: "goto_r5"
+            r3:
+                attr:
+                    type: "square"
+                    pose: [[-2,0], [0]]
+                    length: 1
+                    hysteresis: 0.05
+                connected_to:
+                    r6: "goto_r6"
+                    r2: "goto_r2"
+                    r3: "goto_r3"
+            r4:
+                attr:
+                    type: "square"
+                    pose: [[0,-1], [0]]
+                    length: 1
+                    hysteresis: 0.05
+                connected_to:
+                    r1: "goto_r1"
+                    r4: "goto_r4"
+                    r5: "goto_r5"
+            r5:
+                attr:
+                    type: "square"
+                    pose: [[-1,-1], [0]]
+                    length: 1
+                    hysteresis: 0.05
+                connected_to:
+                    r2: "goto_r2"
+                    r4: "goto_r4"
+                    r5: "goto_r5"
+                    r6: "goto_r6"
+            r6:
+                attr:
+                    type: "square"
+                    pose: [[-2,-1], [0]]
+                    length: 1
+                    hysteresis: 0.05
+                connected_to:
+                    r3: "goto_r3"
+                    r4: "goto_r4"
+                    r6: "goto_r6"
     nexus_load:
         ts_type: "nexus_load"
         initial: "unloaded"
@@ -77,32 +100,41 @@ actions:
         guard: "1"
         attr:
             region: r2
-            pose: [[1,1,0], [0,0,0,1]]
+            pose: [[-1,0,0], [0,0,0,1]]
     goto_r3:
         type: "move"
         weight: 10
         guard: "1"
         attr:
             region: r3
-            pose: [[2,1,0], [0,0,0,1]]
+            pose: [[-2,0,0], [0,0,0,1]]
+    goto_r4:
+        type: "move"
+        weight: 10
+        guard: "1"
+        attr:
+            region: r4
+            pose: [[0,-1,0], [0,0,0,1]]
+    goto_r5:
+        type: "move"
+        weight: 10
+        guard: "1"
+        attr:
+            region: r5
+            pose: [[-1,-1,0], [0,0,0,1]]
+    goto_r6:
+        type: "move"
+        weight: 10
+        guard: "1"
+        attr:
+            region: r6
+            pose: [[-2,1,0], [0,0,0,1]]
     pick:
         type: "nexus_pick"
         weight: 10
-        guard: "r3 || r2 || charged"
+        guard: "r1"
     drop:
         type: "nexus_drop"
         weight: 10
-        guard: "r3 || r2 || charged"
-    charge:
-        type: "battery_charge"
-        weight: 10
-        guard: "r1 && (loaded || unloaded)"    
-    discharge:
-        type: "battery_discharge"
-        weight: 10
-        guard: "1"
-    idle:
-        type: "battery_idle"
-        weight: 10
-        guard: "1"
+        guard: "r5"
 
