@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import rospy
 from ltl_automaton_planner.ltl_tools.buchi import mission_to_buchi
 from ltl_automaton_planner.ltl_tools.product import ProdAut
 #from ts import distance, reach_waypoint
@@ -22,7 +23,7 @@ class LTLPlanner(object):
 
 
     def optimal(self, style='static'):
-        
+        rospy.loginfo("LTL Planner: planning in progress ("+style+")")
         if style == 'static':
             # full graph construction
             self.product.graph['ts'].build_full()
@@ -37,26 +38,12 @@ class LTLPlanner(object):
             self.product.build_accept() 
             self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
             if self.run == None:
-                print('---No valid plan has been found!---')
-                print('---Check you FTS or task---')
-                return 
-        #print('\n'
-        print('------------------------------')
-        print('the prefix of plan **states**:')
-        print([n for n in self.run.line])
-        print('the suffix of plan **states**:')
-        print([n for n in self.run.loop])
-        print('------------------------------')
-        print('the prefix of plan **aps**:')
-        print([self.product.graph['ts'].nodes[n]['label'] for n in self.run.line])
-        print('the suffix of plan **aps**:')
-        print([self.product.graph['ts'].nodes[n]['label'] for n in self.run.loop])
-        #print('\n'
-        print('------------------------------')
-        # print('the prefix of plan **actions**:'
-        # print([n for n in self.run.pre_plan]
-        # print('the suffix of plan **actions**:'
-        # print([n for n in self.run.suf_plan]
+                rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
+                return
+
+        rospy.logdebug("Prefix states: "+str([n for n in self.run.line]))
+        rospy.logdebug("Suffix states: "+str([n for n in self.run.loop]))
+
         self.opt_log.append((self.Time, self.run.pre_plan, self.run.suf_plan, self.run.precost, self.run.sufcost, self.run.totalcost))
         self.last_time = self.Time
         self.acc_change = 0
@@ -74,9 +61,6 @@ class LTLPlanner(object):
         self.product.possible_states = self.product.get_possible_states(ts_node)
 
         if self.start_suffix():
-            print('==============================')
-            print('--- New suffix execution---')
-            print('==============================' )              
             self.product.possible_states = self.intersect_accept(self.product.possible_states, ts_node)
 
         # If possible states set in not empty, return true
@@ -93,14 +77,9 @@ class LTLPlanner(object):
 
 
     def start_suffix(self):
-        print("==================")
-        print("START SUFFIX TEST")
-        print("==================")
         if ((self.segment == 'loop') and (self.index == 0)):
-            print("RETURN TRUE")
             return True
         else:
-            print("RETURN FALSE")
             return False
 
     def find_next_move(self):

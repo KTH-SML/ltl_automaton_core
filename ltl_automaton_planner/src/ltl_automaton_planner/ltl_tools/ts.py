@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import rospy
 from ltl_automaton_planner.boolean_formulas.parser import parse as parse_guard
 
 from math import sqrt
@@ -30,9 +30,8 @@ class TSModel(DiGraph):
                          incoming_graph_data=self.product,
                          initial=self.product.graph['initial'],
                          ts_state_format=self.product.graph['ts_state_format'])
-        print('full_model constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
-        print("---initial in TS---")
-        print(self.graph['initial'])
+        rospy.loginfo("LTL Planner: full model constructed with %d states and %s transitions" %(len(self.nodes()), len(self.edges())))
+        rospy.loginfo("LTL Planner: initial state in TS is %s" %str(self.graph['initial']))
 
     #----------------------------------
     # Delete and set new initial state

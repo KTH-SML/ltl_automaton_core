@@ -14,8 +14,6 @@ def import_ts_from_file(transition_system_textfile):
 
 def state_models_from_ts(TS_dict, initial_states_dict=None):
     state_models = []
-    print("=========== INIT STATE DICT ===========")
-    print(initial_states_dict)
 
     # If initial states are given as argument
     if initial_states_dict:
@@ -25,7 +23,6 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
 
     # For every state model define in file, using state_dim to ensure order (dict are not ordered)
     for model_dim in TS_dict['state_dim']:
-        print("processing model dimension "+model_dim)
         state_model_dict = TS_dict['state_models'][model_dim]
         state_model = DiGraph(initial=set(), ts_state_format=[str(model_dim)])
         #------------------
@@ -37,8 +34,6 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
         if not initial_states_dict:
             state_model.graph['initial']=set([tuple([state_model_dict['initial']])])
         else:
-            print("---")
-            print(initial_states_dict[model_dim])
             state_model.graph['initial']=set([tuple([initial_states_dict[model_dim]])])
         #----------------------------------
         # Connect previously created nodes
@@ -58,7 +53,6 @@ def state_models_from_ts(TS_dict, initial_states_dict=None):
         # Add state model to list
         #-------------------------
         state_models.append(state_model)
-        print(state_model.nodes())
 
     return state_models
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import rospy
 from ltl_automaton_planner.ltl_tools.buchi import check_label_for_buchi_edge
 #from discrete_plan import has_path_to_accept
 
@@ -39,7 +39,7 @@ class ProdAut(DiGraph):
         # Build initial possible state set from initial state
         self.possible_states = set(self.graph['initial'])
 
-        print('full product constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
+        rospy.loginfo('LTL Planner: full product constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
 
     # Build required for IRL
     def build_full_margin(self, opt_path):
@@ -267,5 +267,5 @@ class ProdAut_Run(object):
             # Add 'weight' label between the consecutive TS nodes of the suffix plan to the cost
             self.suf_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # action cost
 
-        print('pre_plan: ' + str(self.pre_plan))
-        print('suf_plan: ' + str(self.suf_plan))
+        rospy.loginfo('Prefix plan: ' + str(self.pre_plan))
+        rospy.loginfo('Suffix plan: ' + str(self.suf_plan))

@@ -244,13 +244,12 @@ class MainPlanner(object):
 
                 # If state is not the next one in plan replan 
                 elif self.replan_on_unplanned_move:
-                    #Set state as initial
-                    # Replan
+                    rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
+                    # Replan with state as initial
                     self.ltl_planner.replan_from_ts_state(state)
                     self.publish_plan()
 
                     # Publish next move
-                    rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
                     self.plan_pub.publish(self.ltl_planner.next_move)
 
                 #-------------
@@ -365,5 +364,9 @@ class MainPlanner(object):
 #==============================
 if __name__ == '__main__':
     rospy.init_node('ltl_planner', anonymous=False)
-    ltl_planner_node = MainPlanner()
-    rospy.spin()
+    try:
+        ltl_planner_node = MainPlanner()
+        rospy.spin()
+    except ValueError as e:
+        rospy.logerr("LTL Planner: "+str(e))
+        rospy.logerr("LTL Planner: shutting down...")
