@@ -74,7 +74,7 @@ class MainPlanner(object):
         #-------------------
         # Get TS from param
         transition_system_textfile = rospy.get_param('transition_system_textfile')
-        self.transition_system = yaml.load(transition_system_textfile, Loader=yaml.FullLoader)
+        self.transition_system = import_ts_from_file(transition_system_textfile)
         #print(self.transition_system)
 
         # Parameter if initial TS is set from agent callback or from TS config file
@@ -145,9 +145,8 @@ class MainPlanner(object):
 
 
     def build_automaton(self):
-        # Import TS from config file
-        ts_dict = import_ts_from_file(rospy.get_param('transition_system_textfile'))
-        state_models = state_models_from_ts(ts_dict, self.initial_state_ts_dict)
+        # Import state models from TS
+        state_models = state_models_from_ts(self.transition_system, self.initial_state_ts_dict)
      
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model = TSModel(state_models)

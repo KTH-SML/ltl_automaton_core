@@ -6,7 +6,7 @@ from networkx.classes.digraph import DiGraph
 def import_ts_from_file(transition_system_textfile):
     try:
         # Get dictionary from yaml text file
-        transition_system = yaml.load(transition_system_textfile, Loader=yaml.FullLoader)
+        transition_system = yaml.load(transition_system_textfile)
         # TODO: Add a proper parse and check (dimensions, attr,...)
         return transition_system
     except:
