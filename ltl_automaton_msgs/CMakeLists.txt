@@ -48,6 +48,7 @@ generate_dynamic_reconfigure_options(
    FILES
    TrapCheck.srv
    ClosestState.srv
+   TaskPlanning.srv
  )
 
 ## Generate added messages and services with any dependencies listed here

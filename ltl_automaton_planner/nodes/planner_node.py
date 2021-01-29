@@ -15,8 +15,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, import_ts_from_file, handle_ts_state_msg
 
-#Import LTL automaton message definitions
+# Import LTL automaton message definitions
 from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray
+from ltl_automaton_msgs.srv import TaskPlanning, TaskPlanningResponse
 
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
 from dynamic_reconfigure.client import Client as DRClient
@@ -179,6 +180,9 @@ class MainPlanner(object):
         # Initialize publisher to send plan commands
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
 
+        # Initialize task replanning service
+        self.trap_srv = rospy.Service('replanning', TaskPlanning, self.task_replanning_callback)
+
 
     def setup_plugins(self):
         # Get plugin dictionnary from parameters
@@ -195,6 +199,18 @@ class MainPlanner(object):
         self.replan_on_unplanned_move = config['replan_on_unplanned_move']
         self.allow_repeating_state_in_plan = config['allow_repeating_state_in_plan']
         return config
+
+
+    def task_replanning_callback(self, task_planning_req):
+        # Extract task specification from request
+        hard_task = task_planning_req.hard_task
+        soft_task = task_planning_req.soft_task
+        # Create response message
+        rsp = TaskPlanningResponse()
+        # Replan and return success status
+        rsp.success = self.ltl_planner.replan_task(hard_task, soft_task, self.ltl_planner.curr_ts_state)
+        # Return response
+        return rsp
 
 
     def ltl_state_callback(self, msg=TransitionSystemStateStamped()):

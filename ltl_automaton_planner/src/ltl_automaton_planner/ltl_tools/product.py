@@ -138,6 +138,11 @@ class ProdAut(DiGraph):
                 # If Büchi state is an accept state, build composed node and add it to the product accept set
                 self.graph['accept'].add(accept_prod_node)
 
+    #----------------------------------------
+    # Build accept product states with cycle
+    #----------------------------------------
+    # TS needs to be built and Büchi accept states
+    # defined before calling this function
     def build_accept_with_cycle(self):
         # self.graph['ts'].build_full()
         for accept_state in self.graph['accept']:
@@ -267,5 +272,5 @@ class ProdAut_Run(object):
             # Add 'weight' label between the consecutive TS nodes of the suffix plan to the cost
             self.suf_plan_cost.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['weight']) # action cost
 
-        rospy.loginfo('Prefix plan: ' + str(self.pre_plan))
-        rospy.loginfo('Suffix plan: ' + str(self.suf_plan))
+        rospy.loginfo('LTL Planner: Prefix plan: ' + str(self.pre_plan))
+        rospy.loginfo('LTL Planner: Suffix plan: ' + str(self.suf_plan))

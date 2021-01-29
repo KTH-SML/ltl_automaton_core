@@ -8,8 +8,13 @@ import networkx as nx
 
 class LTLPlanner(object):
     def __init__(self, ts, hard_spec, soft_spec, beta=1000, gamma=10):
-        buchi = mission_to_buchi(hard_spec, soft_spec)
-        self.product = ProdAut(ts, buchi, beta)
+        self.hard_spec = hard_spec
+        self.soft_spec = soft_spec
+        self.ts = ts
+
+        #Empty product
+        self.product = None
+
         self.Time = 0
         self.curr_ts_state = None
         self.trace = [] # record the regions been visited
@@ -23,24 +28,47 @@ class LTLPlanner(object):
 
 
     def optimal(self, style='static'):
-        rospy.loginfo("LTL Planner: planning in progress ("+style+")")
+        rospy.loginfo("LTL Planner: --- Planning in progress ("+style+") ---")
+        rospy.loginfo("LTL Planner: Hard task is: "+str(self.hard_spec))
+        rospy.loginfo("LTL Planner: Soft task is: "+str(self.soft_spec))
+
         if style == 'static':
             # full graph construction
+            self.product = ProdAut(self.ts, mission_to_buchi(self.hard_spec, self.soft_spec), self.beta)
             self.product.graph['ts'].build_full()
             self.product.build_full()
             self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
         elif style == 'ready':
-            self.product.build_full()
-            self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
-        elif style == 'on-the-fly':
-            # on-the-fly construction
-            self.product.build_initial()
-            self.product.build_accept() 
-            self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
-            if self.run == None:
-                rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
-                return
+            if self.product:
+                self.product.build_full()
+                self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
+            else:
+                rospy.logerr("LTL Planner: \"ready\" planning was requested but product graph was never built, aborting...")
+                return False
+        elif style == 'on-the-fly-initial':
+            if self.product:
+                # on-the-fly construction, only sets the initial states and replan
+                self.product.build_initial()
+                self.product.build_accept() 
+                self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
+            else:
+                rospy.logerr("LTL Planner: \"on-the-fly-initial\" planning was requested but product graph was never built, aborting...")
+                return False
+        elif style == 'on-the-fly-task':
+            if self.product:
+                # on-the-fly task construction, only reset buchi, initial states and replan
+                self.product.graph['buchi'] = mission_to_buchi(self.hard_spec, self.soft_spec)
+                self.product.build_full()
+                self.run, plantime = dijkstra_plan_networkX(self.product, self.gamma)
+            else:
+                rospy.logerr("LTL Planner: \"on-the-fly-task\" planning was requested but product graph was never built, aborting...")
+                return False
 
+        if self.run == None:
+            rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
+            return False
+
+        rospy.loginfo("LTL Planner: --- Planning successful! ---")
         rospy.logdebug("Prefix states: "+str([n for n in self.run.line]))
         rospy.logdebug("Suffix states: "+str([n for n in self.run.loop]))
 
@@ -144,7 +172,22 @@ class LTLPlanner(object):
         # Set new initial state in TS
         self.product.graph['ts'].set_initial(ts_state)
         # Use on-the-fly to only rebuild the initial product node
-        self.optimal(style="on-the-fly")
+        return self.optimal(style="on-the-fly-initial")
+
+    #--------------------------
+    # Given a new task, replan
+    #--------------------------
+    def replan_task(self, hard_spec, soft_spec, initial_ts_state=None):
+        # If initial state provided, modify initial
+        if initial_ts_state:
+            # Set new initial state in TS
+            self.product.graph['ts'].set_initial(initial_ts_state)
+        # Set new task
+        self.hard_spec = hard_spec
+        self.soft_spec = soft_spec
+        # Use on-the-fly to only rebuild buchi and the initial product node
+        return self.optimal(style="on-the-fly-task")
+
 
     def replan(self):
         '''Create new system plan based on previous history'''
