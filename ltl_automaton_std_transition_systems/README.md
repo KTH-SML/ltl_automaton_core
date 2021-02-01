@@ -15,7 +15,7 @@ The following transistion systems are currently available in the package:
 Monitor the position of an agent in a grid-discretized 2D plane. Takes as input a pose (all message format) and output the name of region as a string. Cells are square and an agent is considered in a cell only based on x, y values (and an added hysteresis).
 When better accuracy is required, disk regions can be stacked on top of cells. An agent is considered on those so called "stations" when inside the disk and aligned within an angular tolerance. The stations are only connected in the transition system graph to the cell region they are on.
 
-<a href="url"><img src="https://github.com/KTH-SML/ltl_automaton_core/blob/main/documentation/pictures/region_2d_pose_station_example.jpg" align="center" height="150" width="400"/></a>
+<a href="url"><img src="/documentation/pictures/region_2d_pose_station_example.png" align="center" height="190" width="500"/></a>
 
 **Example transition system with four cells and a station**
 
