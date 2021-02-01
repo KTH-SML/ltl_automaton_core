@@ -25,26 +25,32 @@ For more information, please take a look at the [wiki](../../../wiki)
 Planner node. Build a product graph from a given transition system and LTL formula. Uses the graph to generate a run and an action plan to follow to satisfy the formula. The planner keep track of possible states by receiving TS (Transition System) state from the agent and output action command to the agent.
 
 #### Subscribed Topics
-- `/ts_state` ([ltl_automaton_msgs/TransitionSystemStateStamped](/ltl_automaton_msgs/msg/TransitionSystemStateStamped.msg))
+- `ts_state` ([ltl_automaton_msgs/TransitionSystemStateStamped](/ltl_automaton_msgs/msg/TransitionSystemStateStamped.msg))
 
     Agent TS state topic. The agent TS state is composed of a list of states from the different state models composing the action model. The planner node receives the agent TS state on this topic and update accordingly the next action and the set of possible states.
 
 #### Published Topics
-- `/next_move_cmd` ([std_msgs/String](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/String.html))
+- `next_move_cmd` ([std_msgs/String](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/String.html))
 
     Next move from the output word (action sequence) to be carried out by the agent in order to satisfy the plan.
 
-- `/possible_ltl_states` ([ltl_automaton_msgs/LTLStateArray](/ltl_automaton_msgs/msg/LTLStateArray.msg))
+- `possible_ltl_states` ([ltl_automaton_msgs/LTLStateArray](/ltl_automaton_msgs/msg/LTLStateArray.msg))
     
     Current possible states of the agent, can be more than one as the system is non-deterministic. LTL states are composed of a TS (Transisition System) state and a Büchi state.
 
-- `/prefix_plan` ([ltl_automaton_msgs/LTLPlan](/ltl_automaton_msgs/msg/LTLPlan.msg))
+- `prefix_plan` ([ltl_automaton_msgs/LTLPlan](/ltl_automaton_msgs/msg/LTLPlan.msg))
 
     Prefix plan (also called prefix word), the action sequence to be carried out once by the agent after planning.
 
-- `/suffix_plan` ([ltl_automaton_msgs/LTLPlan](/ltl_automaton_msgs/msg/LTLPlan.msg))
+- `suffix_plan` ([ltl_automaton_msgs/LTLPlan](/ltl_automaton_msgs/msg/LTLPlan.msg))
     
     Suffix plan (also called suffix word), the action sequence to be carried out repeatively after the prefix plan.
+    
+#### Services
+
+- `replanning` ([ltl_automaton_msgs/TaskPlanning](/ltl_automaton_msgs/srv/TaskPlanning.srv))
+    
+    Triggers planning to satisfy new given hard and soft task.
 
 #### Parameters
 - `agent_name` (string, default: "agent")
