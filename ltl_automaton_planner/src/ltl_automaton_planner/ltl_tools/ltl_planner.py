@@ -78,7 +78,7 @@ class LTLPlanner(object):
         self.index = 0
         self.segment = 'line'
         self.next_move = self.run.pre_plan[self.index]
-        return plantime
+        return True
 
     #-----------------------------
     #   Update current possible   
