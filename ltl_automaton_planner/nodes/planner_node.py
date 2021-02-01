@@ -209,6 +209,9 @@ class MainPlanner(object):
         rsp = TaskPlanningResponse()
         # Replan and return success status
         rsp.success = self.ltl_planner.replan_task(hard_task, soft_task, self.ltl_planner.curr_ts_state)
+        # If successful, change parameters
+        rospy.set_param('hard_task', hard_task)
+        rospy.set_param('soft_task', soft_task)
         # Return response
         return rsp
 
