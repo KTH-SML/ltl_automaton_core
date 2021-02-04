@@ -120,41 +120,43 @@ class Region2DPoseStateMonitor(object):
             prev_dist = float('inf')
             closest_region = None
             for reg in self.region_dict["nodes"][self.state]["connected_to"].keys():
-                dist = float('inf')
-                # If region is a station
-                if (self.region_dict["nodes"][reg]["attr"]["type"] == "station"):
-                    station_pose = self.region_dict["nodes"][reg]["attr"]["pose"]
-                    station_radius = self.region_dict["nodes"][reg]["attr"]["radius"]
-                    dist = self.dist_2d_err(pose, station_pose) - station_radius
+                # Check only if not current region (ignore self-loop)
+                if not (reg == self.state):
+                    dist = float('inf')
+                    # If region is a station
+                    if (self.region_dict["nodes"][reg]["attr"]["type"] == "station"):
+                        station_pose = self.region_dict["nodes"][reg]["attr"]["pose"]
+                        station_radius = self.region_dict["nodes"][reg]["attr"]["radius"]
+                        dist = self.dist_2d_err(pose, station_pose) - station_radius
 
-                # If region is a square
-                else:
-                    square_pose = self.region_dict["nodes"][reg]["attr"]["pose"]
-                    square_side_length = self.region_dict["nodes"][reg]["attr"]["length"]
-
-                    dist_x = square_pose[0][0] - pose.position.x
-                    dist_y = square_pose[0][1] - pose.position.y
-
-                    # If agent X-coordinate is already in square boundaries
-                    if ((float)(-square_side_length)/2 < dist_x < (float)(square_side_length)/2):
-                        dist_x = 0.0
-                    # Else, remove square half side length to distance
+                    # If region is a square
                     else:
-                        dist_x = abs(dist_x) - (float)(square_side_length)/2
+                        square_pose = self.region_dict["nodes"][reg]["attr"]["pose"]
+                        square_side_length = self.region_dict["nodes"][reg]["attr"]["length"]
 
-                    # If agent Y-coordinate is already in square boundaries
-                    if ((float)(-square_side_length)/2 < dist_y < (float)(square_side_length)/2):
-                        dist_y = 0.0
-                    # Else, remove square half side length to distance
-                    else:
-                        dist_y = abs(dist_y) - (float)(square_side_length)/2
+                        dist_x = square_pose[0][0] - pose.position.x
+                        dist_y = square_pose[0][1] - pose.position.y
 
-                    dist = math.sqrt((dist_x)**2 + (dist_y)**2)
+                        # If agent X-coordinate is already in square boundaries
+                        if ((float)(-square_side_length)/2 < dist_x < (float)(square_side_length)/2):
+                            dist_x = 0.0
+                        # Else, remove square half side length to distance
+                        else:
+                            dist_x = abs(dist_x) - (float)(square_side_length)/2
 
-                # If shorter than distance to previously tested region, keep
-                if (dist < prev_dist):
-                    prev_dist = dist
-                    closest_region = str(reg)
+                        # If agent Y-coordinate is already in square boundaries
+                        if ((float)(-square_side_length)/2 < dist_y < (float)(square_side_length)/2):
+                            dist_y = 0.0
+                        # Else, remove square half side length to distance
+                        else:
+                            dist_y = abs(dist_y) - (float)(square_side_length)/2
+
+                        dist = math.sqrt((dist_x)**2 + (dist_y)**2)
+
+                    # If shorter than distance to previously tested region, keep
+                    if (dist < prev_dist):
+                        prev_dist = dist
+                        closest_region = str(reg)
 
         if self.state and closest_region:
             return closest_region, prev_dist
