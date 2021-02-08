@@ -48,12 +48,12 @@ class VelCmdMixer(object):
         self.last_received_human_input = None
 
         # Get velocity component saturations
-        self.max_linear_x_vel = rospy.get_param("~max_linear_x_vel", 0.7)
-        self.max_linear_y_vel = rospy.get_param("~max_linear_y_vel", 0.7)
-        self.max_linear_z_vel = rospy.get_param("~max_linear_z_vel", 0.7)
-        self.max_angular_x_vel = rospy.get_param("~max_angular_x_vel", 0.5)
-        self.max_angular_y_vel = rospy.get_param("~max_angular_y_vel", 0.5)
-        self.max_angular_z_vel = rospy.get_param("~max_angular_z_vel", 0.5)
+        self.max_linear_x_vel = rospy.get_param("~max_linear_x_vel", 0.5)
+        self.max_linear_y_vel = rospy.get_param("~max_linear_y_vel", 0.5)
+        self.max_linear_z_vel = rospy.get_param("~max_linear_z_vel", 0.5)
+        self.max_angular_x_vel = rospy.get_param("~max_angular_x_vel", 2.0)
+        self.max_angular_y_vel = rospy.get_param("~max_angular_y_vel", 2.0)
+        self.max_angular_z_vel = rospy.get_param("~max_angular_z_vel", 2.0)
 
         # Node frequency
         self.frequency = rospy.get_param("node_frequency", 50)
@@ -152,9 +152,11 @@ class VelCmdMixer(object):
             check_for_trap_req.ts_state = ts_state_to_check
             check_for_trap_res = self.trap_cheq_srv(check_for_trap_req)
 
+            rospy.logdebug("LTL velocity command MIC: Closest region is %s and distance is %f" % (closest_reg.closest_state, closest_reg.metric))
+
             # if IT'S A TRAP! (insert Amiral Ackbar meme)
             if check_for_trap_res.is_connected and check_for_trap_res.is_trap:
-                print("WE ARE IN STATE %s AND STATE %s IS TRAP!!!" % (self.curr_ts_state.states, check_for_trap_req.ts_state.states))
+                rospy.logdebug("LTL velocity command MIC: Agent is in state %s and state %s is a trap" % (self.curr_ts_state.states, check_for_trap_req.ts_state.states))
                 # Return distance to closest region
                 return closest_reg.metric
 
@@ -166,13 +168,15 @@ class VelCmdMixer(object):
     #------------------------------------------------------------
     def control_mixer(self, teleop_vel_cmd, planner_vel_cmd):
         #print 'telecontrol signal is' + str(self.tele_control
-        tele_magnitude = math.sqrt(teleop_vel_cmd.linear.x**2
-                                 + teleop_vel_cmd.linear.y**2
-                                 + teleop_vel_cmd.linear.z**2)
+        tele_magnitude = max(math.sqrt(teleop_vel_cmd.linear.x**2
+                                     + teleop_vel_cmd.linear.y**2
+                                     + teleop_vel_cmd.linear.z**2),
+                             math.sqrt(teleop_vel_cmd.angular.x**2
+                                     + teleop_vel_cmd.angular.y**2
+                                     + teleop_vel_cmd.angular.z**2))
 
-        # if tele_magnitude >= self.deadband:
-        if True:
-            # print '--- Human inputs detected ---'
+        if tele_magnitude >= self.deadband:
+            rospy.logdebug("LTL velocity command MIC: Human inputs detected")
 
             # Check for trap
             dist_to_trap = self.check_for_trap()
@@ -195,11 +199,11 @@ class VelCmdMixer(object):
             # If distance to trap returns false, no trap is close, use human input
             else:
                 #if no obstacle is close, use human command
-                print('No trap states are close')
+                rospy.logdebug("LTL velocity command MIC: No trap states are close")
                 teleop_vel_cmd = self.bound_vel_cmd(teleop_vel_cmd)
                 mix_control = teleop_vel_cmd
         else:
-            print('Human inputs below deadband. Autonomous controller used.')
+            rospy.logdebug("LTL velocity command MIC: Human inputs below deadband. Autonomous controller used.")
             mix_control = planner_vel_cmd
 
         return mix_control
@@ -210,7 +214,7 @@ class VelCmdMixer(object):
     def smooth_mix(self, tele_control, navi_control, dist_to_trap, ds, epsilon):
         # Compute gain using epsilon, dist to trap and ds
         gain = self.rho(dist_to_trap-ds)/(self.rho(dist_to_trap-ds)+self.rho(epsilon +self.ds-dist_to_trap))
-        print('human-in-the-loop gain is ' + str(gain))
+        rospy.logdebug("LTL velocity command MIC: human-in-the-loop gain is " + str(gain))
 
         # Mix velocity commands by using previously calculated gain
         mix_vel_cmd = Twist()
