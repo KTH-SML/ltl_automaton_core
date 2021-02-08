@@ -182,6 +182,7 @@ class LTLPlanner(object):
         if initial_ts_state:
             # Set new initial state in TS
             self.product.graph['ts'].set_initial(initial_ts_state)
+            self.product.build_initial()
         # Set new task
         self.hard_spec = hard_spec
         self.soft_spec = soft_spec

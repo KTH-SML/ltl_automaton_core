@@ -241,7 +241,9 @@ class IRLPlugin(object):
             beta = 0
         self.set_beta(beta)
         # Replan
-        self.ltl_planner.optimal(style='ready')
+        print("REPLANNING WITH STATE:")
+        print(self.ltl_planner.curr_ts_state)
+        self.ltl_planner.replan_task(self.ltl_planner.hard_spec, self.ltl_planner.soft_spec, self.ltl_planner.curr_ts_state)
         opt_suffix = list(self.run.suffix)
         print('opt_suffix updated to %s' %str(opt_suffix))
         print('-----------------')

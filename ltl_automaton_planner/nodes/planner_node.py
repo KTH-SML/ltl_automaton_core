@@ -99,11 +99,13 @@ class MainPlanner(object):
     #---------------------------------------------
     # Load plugins from a given plugin dictionary
     #---------------------------------------------
+    def load_and_init_plugins(self, plugin_dict):
+    # ----
     # Format for plugin param is:
     #   plugin/<plugin-name>:
     #       path: <package-path>
     #       args: <additional-argument-dictionary>
-    def load_and_init_plugins(self, plugin_dict):
+    # ----
         self.plugins = {}
         for plugin in plugin_dict:
             # Import plugin module
