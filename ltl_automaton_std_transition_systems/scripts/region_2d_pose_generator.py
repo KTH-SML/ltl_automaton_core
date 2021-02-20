@@ -125,12 +125,11 @@ def write_to_file(file_name="generated_2d_pose_region_ts", region_2d_pose_ts_dic
                                                      file_name+'.yaml'),'w') as file:
         yaml.dump(region_2d_pose_ts_dict, file)
 
-    print "-----------------------------------------------------------"
-    print " 2D pose region transition systems successfully generated!"
-    print "-----------------------------------------------------------"
-    print " File can be find at %s" % os.path.join(rospkg.RosPack().get_path('ltl_automaton_std_transition_systems'),
+    print("-----------------------------------------------------------")
+    print(" 2D pose region transition systems successfully generated!")
+    print("-----------------------------------------------------------")
+    print(" File can be find at %s" % os.path.join(rospkg.RosPack().get_path('ltl_automaton_std_transition_systems'),
                                                                              'config',
                                                                              'generated_ts',
-                                                                             file_name+'.yaml')
-
+                                                                             file_name+'.yaml'))
 
