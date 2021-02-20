@@ -38,18 +38,18 @@ def extract_station_from_input(station_str):
         return None
 
 # Check if station is inside grid dimension and if radius is not bigger than square
-def check_station(grid_data, station_data):
+def check_station(grid_dict, station_data):
     # Check if station radius is smaller than square side lenght:
-    if (station_data[3] > grid_data[1]) or (station_data[3] <=0):
-        print("Station radius must be a positive value and inferior than cell side lenght (%f meters)" % grid_data[1])
+    if (station_data[3] > grid_dict['cell_side_length']) or (station_data[3] <=0):
+        print("Station radius must be a positive value and inferior than cell side lenght (%f meters)" % grid_dict['cell_side_length'])
         return False
     # Check if angle tolerance is inferior or equal to pi radians
     if (station_data[4] > math.pi):
         print("Station angle tolerance must be inferior or equal to pi radians")
         return False
     # Check if distance hysteresis is smaller than square cell side length
-    if (station_data[5] > grid_data[1]):
-        print("Station distance hysteresis must be inferior than half of the cell side lenght (%f meters)" % (grid_data[1]/2))
+    if (station_data[5] > grid_dict['cell_side_length']/2):
+        print("Station distance hysteresis must be inferior than half of the cell side lenght (%f meters)" % (grid_dict['cell_side_length']/2))
         return False
     # Check if angle hysteresis is inferior or equal to pi radians
     if (station_data[6] > math.pi/2):
@@ -58,14 +58,20 @@ def check_station(grid_data, station_data):
 
     # Check if station is in grid dimension
     # Check if x is in grid
-    if (station_data[0] > (grid_data[0][0] + grid_data[1]*grid_data[2])) or (station_data[0] < grid_data[0][0]):
+    if (station_data[0] > (grid_dict['origin']['x'] + grid_dict['cell_side_length']*grid_dict['number_of_cells_x'])) or (station_data[0] < grid_dict['origin']['x']):
         print("Station center point is not in grid, please enter a point inside the grid limits (from (%f, %f) to (%f, %f))"
-           % (grid_data[0][0], grid_data[0][1], (grid_data[0][0] + grid_data[1]*grid_data[2]), (grid_data[0][1] + grid_data[1]*grid_data[3])))
+           % (grid_dict['origin']['x'],
+              grid_dict['origin']['y'], 
+             (grid_dict['origin']['x'] + grid_dict['cell_side_length']*grid_dict['number_of_cells_x']),
+             (grid_dict['origin']['y'] + grid_dict['cell_side_length']*grid_dict['number_of_cells_y'])))
         return False
     # Check if y is in grid
-    if (station_data[1] > (grid_data[0][1] + grid_data[1]*grid_data[3])) or (station_data[1] < grid_data[0][1]):
+    if (station_data[1] > (grid_dict['origin']['y'] + grid_dict['cell_side_length']*grid_dict['number_of_cells_y'])) or (station_data[1] < grid_dict['origin']['y']):
         print("Station center point is not in grid, please enter a point inside the grid limits (from (%f, %f) to (%f, %f))"
-           % (grid_data[0][0], grid_data[0][1], (grid_data[0][0] + grid_data[1]*grid_data[2]), (grid_data[0][1] + grid_data[1]*grid_data[3])))
+           % (grid_dict['origin']['x'],
+              grid_dict['origin']['y'], 
+             (grid_dict['origin']['x'] + grid_dict['cell_side_length']*grid_dict['number_of_cells_x']),
+             (grid_dict['origin']['y'] + grid_dict['cell_side_length']*grid_dict['number_of_cells_y'])))
         return False
 
     # Else, station is okay
@@ -120,7 +126,7 @@ while not cell_hysteresis:
     prompt = '>'
     cell_hysteresis = float(input(prompt))
     if (cell_hysteresis <= 0) or (cell_hysteresis >= cell_side_length/2):
-        print("Please enter a non-zero positive value")
+        print("Please enter a non-zero positive value and smaller than half cell side length")
         cell_hysteresis = None
 
 print("Enter how many cells on x-axis")
@@ -173,7 +179,7 @@ while inputing_stations:
     if not keyboard_input == "end":
         station = extract_station_from_input(keyboard_input)
         if station:
-            if check_station(grid_data, station):
+            if check_station(grid_dict, station):
                 station_list.append(station)
         else:
             print("Entered value is not on the format \"x, y, yaw, radius, angle tolerance, distance hysteresis, angle hysteresis\" (in meters and angle in rad), please enter station again")
