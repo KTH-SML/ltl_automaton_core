@@ -198,7 +198,7 @@ else:
                                         'y': station_list[i][1],
                                         'yaw': station_list[i][2]},
                               'radius': station_list[i][3],
-                              'angle_tolerance': station_list[i][4],
+                              'angle_threshold': station_list[i][4],
                               'dist_hysteresis': station_list[i][5],
                               'angle_hysteresis': station_list[i][6],
                               })

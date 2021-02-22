@@ -42,7 +42,7 @@ def generate_regions_and_actions(region_definition_dict):
                                                                                     {'attr': {'type': 'station',
                                                                                               'pose': [[station_dict['origin']['x'], station_dict['origin']['y']], [station_dict['origin']['yaw']]],
                                                                                               'radius': station_dict['radius'],
-                                                                                              'angle_tolerance': station_dict['angle_tolerance'],
+                                                                                              'angle_threshold': station_dict['angle_threshold'],
                                                                                               'dist_hysteresis': station_dict['dist_hysteresis'],
                                                                                               'angle_hysteresis': station_dict['angle_hysteresis']},
                                                                                      'connected_to': {}}})
