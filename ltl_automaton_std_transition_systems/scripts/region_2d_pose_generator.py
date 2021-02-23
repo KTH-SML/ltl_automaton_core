@@ -42,10 +42,10 @@ def generate_regions_and_actions(region_definition_dict):
                                                                                     {'attr': {'type': 'station',
                                                                                               'pose': [[station_dict['origin']['x'], station_dict['origin']['y']], [station_dict['origin']['yaw']]],
                                                                                               'radius': station_dict['radius'],
-                                                                                              'angle_tolerance': station_dict['angle_tolerance'],
+                                                                                              'angle_threshold': station_dict['angle_threshold'],
                                                                                               'dist_hysteresis': station_dict['dist_hysteresis'],
                                                                                               'angle_hysteresis': station_dict['angle_hysteresis']},
-                                                                                     'connected_to': {}}})
+                                                                                              'connected_to': {'s'+str(i): 'goto_s'+str(i)}}}) # Initialize with self-loop
         # Add action
         station_quaternion = quaternion_from_euler(0, 0, station_dict['origin']['yaw']) # Get quaternion from yaw angle
         region_2d_pose_ts_dict['actions'].update({'goto_s'+str(i): {'type': 'move',
@@ -74,7 +74,7 @@ def generate_regions_and_actions(region_definition_dict):
                                                                                                                     'pose': [[x_coord, y_coord], [0]],
                                                                                                                     'length': region_definition_dict['grid']['cell_side_length'],
                                                                                                                     'hysteresis': region_definition_dict['grid']['cell_hysteresis']},
-                                                                                                           'connected_to': {}}})
+                                                                                                           'connected_to': {'r'+str(i): 'goto_r'+str(i)}}}) # Initialize with self-loop}})
             # Add action
             region_2d_pose_ts_dict['actions'].update({'goto_r'+str(cell_iter): {'type': 'move',
                                                                                 'weight': 10,

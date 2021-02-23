@@ -18,7 +18,9 @@ class Region2DPoseStateMonitor(object):
     def __init__(self):
         self.state = None
         self.curr_pose = None
+        self.station_access_request = ""
 
+        # Get parameters from ROS server
         self.init_params()
 
         # Setup pose callback
@@ -45,6 +47,9 @@ class Region2DPoseStateMonitor(object):
         # Subscribe to topic with any message so that callback can process any type of pose message
         pose_sub = rospy.Subscriber("agent_2d_region_pose", AnyMsg, self.omnipose_callback)
 
+        # Subscribe to topic of agent requesting station access
+        station_request_sub = rospy.Subscriber("station_access_request", String, self.station_request_callback)
+
         # Publisher of current region
         self.current_region_pub = rospy.Publisher("current_region", String, latch=True, queue_size=10)
 
@@ -55,15 +60,20 @@ class Region2DPoseStateMonitor(object):
     # Check agent region using pose and update current region if needed
     #-------------------------------------------------------------------
     def check_curr_region(self, pose):
+        #print("Received pose, current region is")
+        #print(self.state)
+        #print("Station request is")
+        #print(self.station_access_request)
         # If current region is known, 
         if self.state:
             # If current region is a station, we check that agent has left first
             #--------------------------------------------------------------------
-            # Check if current region was left (using hysteresis)
+            # Check if current region was left (using hysteresis) or consider that agent has left if station access request is back to empty
             if (self.region_dict["nodes"][self.state]["attr"]["type"] == "station"):
-                agent_has_left = not self.is_in_station(pose, self.state,
+                agent_has_left = (not self.is_in_station(pose, self.state,
                                                               self.region_dict["nodes"][self.state]["attr"]["dist_hysteresis"],
                                                               self.region_dict["nodes"][self.state]["attr"]["angle_hysteresis"])
+                                  or not (self.station_access_request == self.state))
 
                 # If agent has left current regions, check all connected regions
                 if not agent_has_left:
@@ -173,7 +183,8 @@ class Region2DPoseStateMonitor(object):
         # Check stations first
         for reg in region_keys:
             if reg in self.stations:
-                if self.is_in_station(pose, reg):
+                # Check if agent is in station and requesting the said station access
+                if self.is_in_station(pose, reg) and (self.station_access_request == str(reg)):
                     self.state = str(reg)
                     self.current_region_pub.publish(self.state)
                     return True
@@ -252,6 +263,14 @@ class Region2DPoseStateMonitor(object):
                                                     pose.orientation.z,
                                                     pose.orientation.w])
         return abs(yaw - center_pose[1][0])
+
+
+    #------------------------------
+    # Callback function for saving
+    # agent station access request
+    #------------------------------
+    def station_request_callback(self, msg):
+        self.station_access_request = msg.data
 
     #--------------------------------------
     # Callback function for the agent pose
