@@ -60,6 +60,10 @@ class Region2DPoseStateMonitor(object):
     # Check agent region using pose and update current region if needed
     #-------------------------------------------------------------------
     def check_curr_region(self, pose):
+        #print("Received pose, current region is")
+        #print(self.state)
+        #print("Station request is")
+        #print(self.station_access_request)
         # If current region is known, 
         if self.state:
             # If current region is a station, we check that agent has left first
