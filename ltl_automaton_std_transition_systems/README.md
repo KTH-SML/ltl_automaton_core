@@ -13,7 +13,7 @@ The following transistion systems are currently available in the package:
 ## Nodes
 ### region_2d_pose_monitor.py
 Monitor the position of an agent in a grid-discretized 2D plane. Takes as input a pose (all message format) and output the name of region as a string. Cells are square and an agent is considered in a cell only based on x, y values (and an added hysteresis).
-When better accuracy is required, disk regions can be stacked on top of cells. An agent is considered on those so called "stations" when inside the disk and aligned within an angular tolerance. The stations are only connected in the transition system graph to the cell region they are on.
+When better accuracy is required, disk regions can be stacked on top of cells. An agent is considered on those so called "stations" when inside the disk and aligned within an angular tolerance, and requesting access to the station through a topic. The stations are only connected in the transition system graph to the cell region they are on. To leave a station, the agent simply needs to empty the access request and it will be considered on the underlying cell.
 
 <a href="url"><img src="/documentation/pictures/region_2d_pose_station_example.png" align="center" height="190" width="500"/></a>
 
@@ -24,6 +24,10 @@ When better accuracy is required, disk regions can be stacked on top of cells. A
 - `agent_2d_region_pose` ([geometry_msgs/Pose](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/Pose.html), [geometry_msgs/PoseWithCovariance](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseWithCovariance.html), [geometry_msgs/PoseStamped](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/PoseStamped.html) or [geometry_msgs/PoseWithCovarianceStamped](http://docs.ros.org/en/melodic/api/geometry_msgs/html/msg/PoseWithCovarianceStamped.html))
 
   Agent pose topic. Works with different pose message types.
+  
+- `station_access_request` ([std_msgs/String](http://docs.ros.org/en/noetic/api/std_msgs/html/msg/String.html))
+
+   Station the agent requires access to. Left empty when the agent does not want to enter a station or wants to exit one.
   
 #### Published Topics
 
