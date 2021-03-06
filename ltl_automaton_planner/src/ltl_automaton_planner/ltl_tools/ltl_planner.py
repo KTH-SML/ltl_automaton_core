@@ -77,7 +77,7 @@ class LTLPlanner(object):
         self.acc_change = 0
         self.index = 0
         self.segment = 'line'
-        self.next_move = self.run.pre_plan[self.index]
+        self.next_move = self.find_next_move() #self.run.pre_plan[self.index]
         return True
 
     #-----------------------------
