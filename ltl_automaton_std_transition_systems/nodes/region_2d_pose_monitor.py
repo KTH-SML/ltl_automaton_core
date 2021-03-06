@@ -5,7 +5,7 @@ from rospy.msg import AnyMsg
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, PoseWithCovariance, PoseStamped
 from std_msgs.msg import String
 from roslib.message import get_message_class
-from tf.transformations import euler_from_quaternion
+from tf.transformations import euler_from_quaternion, quaternion_from_euler, quaternion_multiply
 # For function "import_ts_from_file"
 from ltl_automaton_planner.ltl_automaton_utilities import import_ts_from_file
 from ltl_automaton_msgs.srv import ClosestState, ClosestStateResponse
@@ -254,15 +254,24 @@ class Region2DPoseStateMonitor(object):
     #  Compute angle diff (in rad)
     # between a pose and a pose msg
     #-------------------------------
-    # Pose format [[x,y], [phi]]
+    # Center pose format [[x,y], [phi]]
     # Pose msg is ROS geometry_msgs/Pose
-    def yaw_angle_err(self, pose, center_pose):
-        # Get euler angle from pose quaternion
-        (roll, pitch, yaw) = euler_from_quaternion([pose.orientation.x,
-                                                    pose.orientation.y,
-                                                    pose.orientation.z,
-                                                    pose.orientation.w])
-        return abs(yaw - center_pose[1][0])
+    def yaw_angle_err(self, pose_msg, center_pose):
+        # Create quaternion from center pose yaw angle
+        center_pose_quat = quaternion_from_euler(0, 0, center_pose[1][0])
+
+        # Create inversion quaternion of pose_msg for computing error
+        pose_quat_inv = [pose_msg.orientation.x,
+                         pose_msg.orientation.y,
+                         pose_msg.orientation.z,
+                         -pose_msg.orientation.w]
+
+        # Multiply quaternion by inversed quaternion to get quaternion error (difference)
+        error_quat = quaternion_multiply(center_pose_quat, pose_quat_inv)
+        # Extract yaw error
+        (roll, pitch, yaw) = euler_from_quaternion(error_quat)
+
+        return abs(yaw)
 
 
     #------------------------------
