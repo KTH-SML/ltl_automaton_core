@@ -84,7 +84,7 @@ class LTLPlanner(object):
         # If prefix is empty, jump to suffix for init next move
         else:
             self.next_move = self.run.suf_plan[self.index]
-
+            self.segment = 'loop'
         return True
 
     #-----------------------------
