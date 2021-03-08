@@ -77,7 +77,14 @@ class LTLPlanner(object):
         self.acc_change = 0
         self.index = 0
         self.segment = 'line'
-        self.next_move = self.find_next_move() #self.run.pre_plan[self.index]
+        
+        # If prefix exists, init next move with prefix first action
+        if self.run.pre_plan:
+            self.next_move = self.run.pre_plan[self.index]
+        # If prefix is empty, jump to suffix for init next move
+        else:
+            self.next_move = self.run.suf_plan[self.index]
+
         return True
 
     #-----------------------------
