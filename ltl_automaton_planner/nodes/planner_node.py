@@ -11,7 +11,7 @@ import std_msgs
 from ltl_automaton_planner.ltl_tools.ts import TSModel
 from ltl_automaton_planner.ltl_tools.ltl_planner import LTLPlanner
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import networkx as nx
 from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, import_ts_from_file, handle_ts_state_msg
 
@@ -161,7 +161,7 @@ class MainPlanner(object):
         # initialize storage of set of possible runs in product
         self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
-        #show_automaton(self.robot_model.product)
+        show_automaton(self.robot_model.product)
         #show_automaton(self.ltl_planner.product.graph['buchi'])
         #show_automaton(self.ltl_planner.product)
 
