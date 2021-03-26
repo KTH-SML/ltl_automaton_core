@@ -84,7 +84,17 @@ state_models:
                     loaded: "pick"
             loaded:
                 connected_to:
-                    unloaded: "drop"             
+                    unloaded: "drop" 
+                    
+    # battery:
+    #     ts_type: "battery"
+    #     initial: "high"
+    #     nodes:
+    #         high:
+    #             connected_to: {}
+    #         low:
+    #             connected_to:
+    #                 high: "charge"            
 
 actions:
     goto_r1:
@@ -137,4 +147,9 @@ actions:
         type: "nexus_drop"
         weight: 10
         guard: "r5"
+        
+    charge:
+        type: "battery"
+        weight: 10
+        guard: "1"
 
