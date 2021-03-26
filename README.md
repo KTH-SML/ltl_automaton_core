@@ -3,11 +3,8 @@
 ## Overview
 This metapackage provides an implementation of a LTL (Linear Temporal Logic) planner based on automaton graph. More information can be found on the [wiki](../../wiki) or in each package documentation.
 
-### License
-TODO
-
 ### Publications
-TODO
+In progress
 
 ## Installation
 
