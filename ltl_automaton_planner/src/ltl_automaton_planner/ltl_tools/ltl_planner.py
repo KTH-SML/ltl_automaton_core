@@ -69,8 +69,8 @@ class LTLPlanner(object):
             return False
 
         rospy.loginfo("LTL Planner: --- Planning successful! ---")
-        rospy.loginfo("Prefix states: "+str([n for n in self.run.line]))
-        rospy.loginfo("Suffix states: "+str([n for n in self.run.loop]))
+        rospy.logdebug("Prefix states: "+str([n for n in self.run.line]))
+        rospy.logdebug("Suffix states: "+str([n for n in self.run.loop]))
 
         self.opt_log.append((self.Time, self.run.pre_plan, self.run.suf_plan, self.run.precost, self.run.sufcost, self.run.totalcost))
         self.last_time = self.Time
