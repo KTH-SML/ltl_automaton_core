@@ -11,12 +11,16 @@ import networkx as nx
 class TSModel(DiGraph):
 
     def __init__(self, state_models):
-    """TS model, built from a list of state models to combine."""
+        """
+        TS model, built from a list of state models to combine.
+        """
 
         self.state_models = state_models
 
     def build_full(self):
-    """Build TS graph from one or more state model TS."""
+        """
+        Build TS graph from one or more state model TS.
+        """
 
         # If only one state model, use directly as the TS
         if len(self.state_models) == 1:
@@ -43,7 +47,9 @@ class TSModel(DiGraph):
 
 
     def set_initial(self, ts_state):
-    """Delete and set new initial state."""
+        """
+        Delete and set new initial state.
+        """
 
         # If state exist in graph, change initial and return true
         if ts_state in self.product.nodes():
@@ -54,32 +60,35 @@ class TSModel(DiGraph):
             return False
 
     def compose_initial(self, graph_list):
-    """Compose and set initial state
+        """
+        Compose and set initial state
 
-       Create products of initial nodes from the input graph list.
+        Create products of initial nodes from the input graph list.
 
-    """
+        """
         initial_states = [list(graph.graph['initial']) for graph in graph_list]
         init_nodes = self.node_product(*initial_states)
 
         self.graph['initial'].update(set(init_nodes))
 
     def compose_nodes(self, graph_list):
-    """Compose and add nodes to the digraph
+        """
+        Compose and add nodes to the digraph
 
-       Nodes are products of nodes from the input graph list.
+        Nodes are products of nodes from the input graph list.
 
-    """
+        """
         node_product = self.node_product(*graph_list)
         for node in node_product:
             self.add_node(node, label=node, marker='unvisited')
 
     def compose_edges(self, graph_list):
-    """Compose and add edges to the digraph
+        """
+        Compose and add edges to the digraph
 
-       Nodes are products of nodes from the input graph list. Needs to be called after composing nodes.
+        Nodes are products of nodes from the input graph list. Needs to be called after composing nodes.
 
-    """
+        """
         # For each individual state model
         for i in range(len(graph_list)):
             # For each state in this model
@@ -101,7 +110,9 @@ class TSModel(DiGraph):
                                           marker='visited')
 
     def is_action_allowed(self, action_guard, ts_label):
-    """Check action guard against the node label."""
+        """
+        Check action guard against the node label.
+        """
 
         guard_expr = parse_guard(action_guard)
         if guard_expr.check(ts_label):
@@ -111,11 +122,12 @@ class TSModel(DiGraph):
 
     @staticmethod
     def node_product(*args):
-    """Returns a list of product nodes.
-        
+        """
+        Returns a list of product nodes.
+            
         Take as input lists of nodes.
 
-    """
+        """
         node_pools = [list(pool) for pool in args]
         product_pool = [tuple()]
         for node_pool in node_pools:
