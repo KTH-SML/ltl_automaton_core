@@ -11,6 +11,16 @@ In progress
 ### Dependencies
 - [Robot Operating System (ROS)](http://wiki.ros.org)(duh), package tested on Kinetic, Melodic and Morenia distributions
 
+- [LTL2BA](https://github.com/KTH-DHSG/ros_ltl2ba). ROS package wrapping for the LTL2BA software by Dennis Oddoux and Paul Gastin.
+    - Clone the repository from Github in your catkin workspace:
+    ```
+    cd catkin_ws/src
+    git clone https://github.com/KTH-DHSG/ros_ltl2ba
+    ```
+    - Build your workspace with your prefered tool:
+    `cd ..`
+    `catkin_make` or `catkin build`
+
 - [PLY (Python Lex-Yacc)](http://www.dabeaz.com/ply/)
 	- For Python2 (ROS Kinetic & Melodic):
 	`pip install ply`
