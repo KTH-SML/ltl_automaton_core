@@ -7,9 +7,7 @@ from argparse import ArgumentParser
 from ltl_automaton_planner.ltl_tools.promela import Parser
 
 def run_ltl2ba(formula):
-    script_dir = dirname(abspath(__file__))
-    ltl2ba = join(script_dir, "ltl2ba")
-    raw_output = check_output([ltl2ba, "-f", "%s" % formula])
+    raw_output = check_output(["rosrun", "ltl2ba", "ltl2ba", "-f", "%s" % formula])
     ascii_decoder = getdecoder("ascii")
     (output, _) = ascii_decoder(raw_output)
     #print 'Output from ltl2ba'
