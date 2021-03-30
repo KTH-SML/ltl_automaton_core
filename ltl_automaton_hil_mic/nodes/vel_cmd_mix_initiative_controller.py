@@ -56,7 +56,7 @@ class VelCmdMixer(object):
         self.max_angular_z_vel = rospy.get_param("~max_angular_z_vel", 2.0)
 
         # Node frequency
-        self.frequency = rospy.get_param("node_frequency", 50)
+        self.frequency = rospy.get_param("~node_frequency", 50)
 
         # Get monitored TS state model
         self.state_dimension_name = rospy.get_param("state_dimension_name", "2d_pose_region")

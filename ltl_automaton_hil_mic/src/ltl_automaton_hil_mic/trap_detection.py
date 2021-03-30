@@ -98,13 +98,13 @@ class TrapDetectionPlugin(object):
         return True
 
     def has_path_to_accept(self, f_s):
-            for acc in self.ltl_planner.product.graph['accept']:
-                    if has_path(self.ltl_planner.product, f_s, acc):
-                            return True
-            return False
+        for acc in self.ltl_planner.product.graph['accept']:
+            if has_path(self.ltl_planner.product, f_s, acc):
+                return True
+        return False
 
     def has_path_to_accept_with_cycle(self, f_s):
-            for acc in self.ltl_planner.product.graph['accept_with_cycle']:
-                if has_path(self.ltl_planner.product, f_s, acc):
-                    return True
-                return False
+        for acc in self.ltl_planner.product.graph['accept_with_cycle']:
+            if has_path(self.ltl_planner.product, f_s, acc):
+                return True
+        return False
