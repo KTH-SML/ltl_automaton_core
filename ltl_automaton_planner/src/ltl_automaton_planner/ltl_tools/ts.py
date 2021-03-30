@@ -52,7 +52,7 @@ class TSModel(DiGraph):
         """
 
         # If state exist in graph, change initial and return true
-        if ts_state in self.product.nodes():
+        if ts_state in self.nodes():
             self.graph['initial'] = set([ts_state])
             return True
         # If state doesn't exist in graph, return false

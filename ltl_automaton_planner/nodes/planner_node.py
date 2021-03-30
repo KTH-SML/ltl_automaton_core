@@ -224,7 +224,7 @@ class MainPlanner(object):
         #-------------------------
         # Check if state is in TS
         #-------------------------
-        if (state in self.robot_model.product.nodes()):
+        if (state in self.robot_model.nodes()):
 
             # If state is different from previous state or if parameter allows for repeating state in plan
             if (not (state == self.ltl_planner.curr_ts_state)) or (self.allow_repeating_state_in_plan):
