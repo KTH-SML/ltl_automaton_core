@@ -159,7 +159,7 @@ Implement a IRL (Inverse Reinforcement Learning) of the expression of the LTL so
 
 #### Published Topics
 
-- `possible_runs`  ([ltl_automaton_msgs/LTLStateRuns](/ltl_automaton_msgs/msg/LTLStateRuns.msg)))
+- `possible_runs`  ([ltl_automaton_msgs/LTLStateRuns](/ltl_automaton_msgs/msg/LTLStateRuns.msg))
     
     Current recorded teaching runs. For debug purposes only.
 
