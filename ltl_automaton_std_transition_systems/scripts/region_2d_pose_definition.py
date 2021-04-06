@@ -183,6 +183,7 @@ while inputing_stations:
 print("----------------------------------------------------------")
 if len(station_list) == 0:
     print(" No station added")
+    station_dicts = []
 else:
     print(" Adding the following stations")
     station_dicts = []

@@ -45,7 +45,7 @@ def generate_regions_and_actions(region_definition_dict):
                                                                                               'angle_threshold': station_dict['angle_threshold'],
                                                                                               'dist_hysteresis': station_dict['dist_hysteresis'],
                                                                                               'angle_hysteresis': station_dict['angle_hysteresis']},
-                                                                                              'connected_to': {'s'+str(i): 'goto_s'+str(i)}}}) # Initialize with self-loop
+                                                                                     'connected_to': {'s'+str(i): 'goto_s'+str(i)}}}) # Initialize with self-loop
         # Add action
         station_quaternion = quaternion_from_euler(0, 0, station_dict['origin']['yaw']) # Get quaternion from yaw angle
         region_2d_pose_ts_dict['actions'].update({'goto_s'+str(i): {'type': 'move',
@@ -74,11 +74,11 @@ def generate_regions_and_actions(region_definition_dict):
                                                                                                                     'pose': [[x_coord, y_coord], [0]],
                                                                                                                     'length': region_definition_dict['grid']['cell_side_length'],
                                                                                                                     'hysteresis': region_definition_dict['grid']['cell_hysteresis']},
-                                                                                                           'connected_to': {'r'+str(i): 'goto_r'+str(i)}}}) # Initialize with self-loop}})
+                                                                                                           'connected_to': {'r'+str(cell_iter): 'goto_r'+str(cell_iter)}}}) # Initialize with self-loop}})
             # Add action
             region_2d_pose_ts_dict['actions'].update({'goto_r'+str(cell_iter): {'type': 'move',
                                                                                 'weight': 10,
-                                                                                'attr': {'region': 'r'+str(i), 'pose': [[ x_coord, y_coord, 0], [0, 0, 0, 1]]}}})
+                                                                                'attr': {'region': 'r'+str(cell_iter), 'pose': [[ x_coord, y_coord, 0], [0, 0, 0, 1]]}}})
 
             # Check if station is connected
             # Go through all regions
