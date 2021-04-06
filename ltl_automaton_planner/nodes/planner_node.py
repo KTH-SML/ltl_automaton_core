@@ -22,9 +22,8 @@ from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSyste
 from ltl_automaton_msgs.srv import TaskPlanning, TaskPlanningResponse
 
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
-from dynamic_reconfigure.client import Client as DRClient
 from dynamic_reconfigure.server import Server as DRServer
-from ltl_automaton_msgs.cfg import LTLAutomatonDPConfig
+from ltl_automaton_planner.cfg import LTLAutomatonDPConfig
 
 
 def show_automaton(automaton_graph):
