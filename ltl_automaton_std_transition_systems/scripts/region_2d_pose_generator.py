@@ -102,14 +102,18 @@ def generate_regions_and_actions(region_definition_dict):
 
     # Add connection between cells
     cell_iter = 1
-    # Iterate over lines on y-axis
+    # Iterate over column on y-axis
     for cell_num_on_y in range(region_definition_dict['grid']['number_of_cells_y']):
-        # Iterate over columns on y-axis
+        # Iterate over rows on x-axis
         for cell_num_on_x in range(region_definition_dict['grid']['number_of_cells_x']):
-            # If previous region exist, add to connected to list
-            connect_if_exist(region_2d_pose_ts_dict, 'r'+str(cell_iter), 'r'+str(cell_iter-1))
-            # If next region exist, add to connected to list
-            connect_if_exist(region_2d_pose_ts_dict, 'r'+str(cell_iter), 'r'+str(cell_iter+1))
+            # If not first cell of the column
+            if not cell_num_on_x == 0:
+                # If previous region exist, add to connected to list
+                connect_if_exist(region_2d_pose_ts_dict, 'r'+str(cell_iter), 'r'+str(cell_iter-1))
+            # If not last cell of the column
+            if not cell_num_on_x == (region_definition_dict['grid']['number_of_cells_x']-1):
+                # If next region exist, add to connected to list
+                connect_if_exist(region_2d_pose_ts_dict, 'r'+str(cell_iter), 'r'+str(cell_iter+1))
             # If region in previous line exist, add to connected to list
             connect_if_exist(region_2d_pose_ts_dict, 'r'+str(cell_iter), 'r'+str(cell_iter-region_definition_dict['grid']['number_of_cells_x']))
             # If region in next line exist, add to connected to list
