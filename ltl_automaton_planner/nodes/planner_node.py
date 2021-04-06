@@ -6,6 +6,8 @@ import sys
 import importlib
 import yaml
 
+from copy import deepcopy
+
 import std_msgs
 
 from ltl_automaton_planner.ltl_tools.ts import TSModel
@@ -91,7 +93,8 @@ class MainPlanner(object):
 
         # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
         self.replan_on_unplanned_move = True
-        self.allow_repeating_state_in_plan = False
+        self.check_timestamp = True
+        self.prev_received_timestamp = rospy.Time()
         self.dynparam_srv = DRServer(LTLAutomatonDPConfig, self.dynparam_callback)
     
     #---------------------------------------------
@@ -197,7 +200,7 @@ class MainPlanner(object):
 
     def dynparam_callback(self, config, level):
         self.replan_on_unplanned_move = config['replan_on_unplanned_move']
-        self.allow_repeating_state_in_plan = config['allow_repeating_state_in_plan']
+        self.check_timestamp = config['check_timestamp']
         return config
 
 
@@ -226,8 +229,10 @@ class MainPlanner(object):
         #-------------------------
         if (state in self.robot_model.nodes()):
 
-            # If state is different from previous state or if parameter allows for repeating state in plan
-            if (not (state == self.ltl_planner.curr_ts_state)) or (self.allow_repeating_state_in_plan):
+            # If timestamp check is enabled, check the timestamp
+            if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp.to_sec())):
+                # Update previously received timestamp
+                self.prev_received_timestamp = deepcopy(msg.header.stamp)
 
                 # Update current state
                 self.ltl_planner.curr_ts_state = state
@@ -278,9 +283,9 @@ class MainPlanner(object):
                 for plugin in self.plugins:
                     self.plugins[plugin].run_at_ts_update(state)
 
-            # If state is the same as previous state and parameters "allow for repeating state in plan" is false
+            # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
             else:
-                rospy.logwarn("LTL planner: already received TS state %s" % (str(state)))
+                rospy.logwarn("LTL planner: not updating with received TS state %s, timestamp identical to previously received message timestamp at time %f" % (str(state), self.prev_received_timestamp.to_sec()))
 
         #--------------------------------------------
         # If state not part of the transition system
