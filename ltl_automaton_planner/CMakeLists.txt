@@ -8,12 +8,17 @@ project(ltl_automaton_planner)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  dynamic_reconfigure
   roscpp
   rospy
   std_msgs
 )
 
 catkin_python_setup()
+
+generate_dynamic_reconfigure_options(
+  cfg/ltl_automaton_dynparam.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
