@@ -78,9 +78,9 @@ Planner node. Build a product graph from a given transition system and LTL formu
     Action model transition system definition. More information on the action model can be found below.
 
 
-- `~allow_repeating_state_in_plan` (boolean, default: false)
+- `~check_timestamp` (boolean, default: true)
     
-    If false, ignore a received TS state when it's the same as previously received TS state.
+    If false, ignore a received TS state message when the timestamp is identical to previously received TS state message timestamp.
 
 
 - `~initial_ts_state_from_agent` (boolean, default: false)
