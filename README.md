@@ -6,12 +6,15 @@ This metapackage provides an implementation of a LTL (Linear Temporal Logic) pla
 ### Publication
 R. Baran, X. Tan, P. Varnai, P. Yu, S. Ahlberg, M. Guo, W. Shaw Cortez, and D. V. Dimarogonas, "A ROS Package for Human-In-the-Loop Planning and Control under Linear Temporal Logic Tasks", About to be presented at the IEEE 17th International Conference on Automation Science and Engineering (CASE), 2021. To cite this work:
 ```
-@inproceedings{baran2021rosltl,
-  title={A ROS Package for Human-In-the-Loop Planning and Control under Linear Temporal Logic Tasks},
-  author={Robin Baran, Xiao Tan, Peter Varnai, Pian Yu, Sofie Ahlberg, Meng Guo, Wenceslao Shaw Cortez and Dimos V. Dimarogonas},
-  booktitle={IEEE 17th International Conference on Automation Science and Engineering (CASE)},
-  year={2021}
-}
+@INPROCEEDINGS{9551648,
+  author={Baran, Robin and Tan, Xiao and Varnai, Peter and Yu, Pian and Ahlberg, Sofie and Guo, Meng and Cortez, Wenceslao Shaw and Dimarogonas, Dimos V.},
+  booktitle={2021 IEEE 17th International Conference on Automation Science and Engineering (CASE)}, 
+  title={A ROS Package for Human-In-the-Loop Planning and Control under Linear Temporal Logic Tasks}, 
+  year={2021},
+  volume={},
+  number={},
+  pages={2182-2187},
+  doi={10.1109/CASE49439.2021.9551648}}
 ```
 
 ## Installation
