@@ -4,7 +4,7 @@
 This metapackage provides an implementation of a LTL (Linear Temporal Logic) planner based on automaton graph. More information can be found on the [wiki](../../wiki) or in each package documentation.
 
 ### Publication
-R. Baran, X. Tan, P. Varnai, P. Yu, S. Ahlberg, M. Guo, W. Shaw Cortez, and D. V. Dimarogonas, "A ROS Package for Human-In-the-Loop Planning and Control under Linear Temporal Logic Tasks", About to be presented at the IEEE 17th International Conference on Automation Science and Engineering (CASE), 2021. To cite this work:
+R. Baran, X. Tan, P. Varnai, P. Yu, S. Ahlberg, M. Guo, W. Shaw Cortez, and D. V. Dimarogonas, "A ROS Package for Human-In-the-Loop Planning and Control under Linear Temporal Logic Tasks", presented at the IEEE 17th International Conference on Automation Science and Engineering (CASE), 2021. To cite this work:
 ```
 @INPROCEEDINGS{9551648,
   author={Baran, Robin and Tan, Xiao and Varnai, Peter and Yu, Pian and Ahlberg, Sofie and Guo, Meng and Cortez, Wenceslao Shaw and Dimarogonas, Dimos V.},
